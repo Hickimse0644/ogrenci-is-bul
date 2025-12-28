@@ -1,59 +1,116 @@
-/* =========================
-   2) BASİT FRONTEND (index.html)
-   =========================
-
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <title>Öğrenci İş Bul</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Öğrenci İş Bul | Hızlı ve Kolay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f3f4f6; }
+        .job-card { transition: transform 0.2s; }
+        .job-card:hover { transform: translateY(-5px); }
+    </style>
 </head>
 <body>
-  <h2>İş İlanı Ekle</h2>
-  <input id="title" placeholder="İş (Garson)" /><br />
-  <input id="salary" placeholder="Maaş" /><br />
-  <input id="location" placeholder="Konum" /><br />
-  <input id="phone" placeholder="Telefon" /><br />
-  <input id="email" placeholder="E-posta" /><br />
-  <textarea id="description" placeholder="Açıklama"></textarea><br />
-  <button onclick="addJob()">Ekle</button>
-
-  <h2>İş İlanları</h2>
-  <div id="jobs"></div>
-
-<script>
-function addJob() {
-  fetch('http://localhost:3000/jobs', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title: title.value,
-      salary: salary.value,
-      location: location.value,
-      phone: phone.value,
-      email: email.value,
-      description: description.value
-    })
-  }).then(loadJobs);
-}
-
-function loadJobs() {
-  fetch('http://localhost:3000/jobs')
-    .then(res => res.json())
-    .then(data => {
-      jobs.innerHTML = data.map(j => `
-        <div style="border:1px solid #ccc; margin:5px; padding:5px">
-          <b>${j.title}</b> – ${j.salary}<br>
-          ${j.location}<br>
-          Tel: ${j.phone} | ${j.email}<br>
-          ${j.description}
+    <nav class="bg-blue-600 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold tracking-tight">🎓 ÖĞRENCİ İŞ</h1>
+            <button onclick="document.getElementById('addJobModal').classList.remove('hidden')" class="bg-white text-blue-600 px-4 py-2 rounded-full font-bold shadow-md">İlan Ver</button>
         </div>
-      `).join('');
-    });
-}
+    </nav>
 
-loadJobs();
-</script>
+    <div class="container mx-auto p-4 max-w-4xl">
+        <div id="welcomeScreen" class="bg-white p-6 rounded-2xl shadow-md mb-6 text-center">
+            <h2 class="text-xl font-bold mb-4">Hoş geldin! Seni nasıl tanımlayalım?</h2>
+            <div class="flex gap-4 justify-center">
+                <button onclick="setUserType('student')" class="bg-blue-100 text-blue-700 px-6 py-3 rounded-xl border-2 border-blue-500 font-semibold">Öğrenciyim</button>
+                <button onclick="setUserType('employer')" class="bg-green-100 text-green-700 px-6 py-3 rounded-xl border-2 border-green-500 font-semibold">İşverenim</button>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <i class="fa-solid var(--fa-bolt) text-yellow-500"></i> Güncel İlanlar
+        </h2>
+        
+        <div id="jobList" class="grid gap-4">
+            <p class="text-gray-500 italic">İlanlar yükleniyor...</p>
+        </div>
+    </div>
+
+    <div id="addJobModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">Yeni İş İlanı Oluştur</h3>
+            <div class="space-y-3">
+                <input id="title" type="text" placeholder="İş Başlığı (Örn: Garson)" class="w-full p-3 border rounded-lg">
+                <div class="flex gap-2">
+                    <input id="salary" type="text" placeholder="Maaş (Günlük/Saatlik)" class="w-full p-3 border rounded-lg">
+                    <input id="location" type="text" placeholder="Şehir/İlçe" class="w-full p-3 border rounded-lg">
+                </div>
+                <input id="phone" type="text" placeholder="Telefon No" class="w-full p-3 border rounded-lg">
+                <textarea id="description" placeholder="İş Detayları..." class="w-full p-3 border rounded-lg h-24"></textarea>
+                <div class="flex gap-2">
+                    <button onclick="addJob()" class="bg-blue-600 text-white w-full py-3 rounded-lg font-bold">Yayınla</button>
+                    <button onclick="document.getElementById('addJobModal').classList.add('hidden')" class="bg-gray-200 text-gray-700 w-full py-3 rounded-lg font-bold">İptal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setUserType(type) {
+            localStorage.setItem('userType', type);
+            document.getElementById('welcomeScreen').innerHTML = `<p class="text-blue-600 font-bold">Şu an <b>${type === 'student' ? 'Öğrenci' : 'İşveren'}</b> olarak görüntülüyorsun.</p>`;
+        }
+
+        async function loadJobs() {
+            const res = await fetch('/api/jobs');
+            const jobs = await res.json();
+            const container = document.getElementById('jobList');
+            
+            container.innerHTML = jobs.map(j => `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 job-card">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="bg-blue-100 text-blue-600 text-xs font-bold px-2 py-1 rounded mb-2 inline-block">ACİL İŞ</span>
+                            <h3 class="text-xl font-bold text-gray-800">${j.title}</h3>
+                            <p class="text-gray-500 text-sm mt-1"><i class="fa-solid fa-location-dot"></i> ${j.location}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-green-600 font-bold text-lg">${j.salary}</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 mt-3 text-sm line-clamp-2">${j.description}</p>
+                    <div class="mt-4 pt-4 border-t flex justify-between items-center">
+                        <a href="tel:${j.phone}" class="text-blue-600 font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-phone"></i> Hemen Ara
+                        </a>
+                        <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold">Detaylar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function addJob() {
+            const data = {
+                title: document.getElementById('title').value,
+                salary: document.getElementById('salary').value,
+                location: document.getElementById('location').value,
+                phone: document.getElementById('phone').value,
+                description: document.getElementById('description').value
+            };
+
+            await fetch('/api/jobs', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+
+            document.getElementById('addJobModal').classList.add('hidden');
+            loadJobs();
+        }
+
+        loadJobs();
+    </script>
 </body>
 </html>
-*/
