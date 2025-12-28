@@ -74,8 +74,9 @@ app.get("/api/messages/:job_id", (req, res) => {
   });
 });
 
-// Ana sayfa yönlendirmesi - BU SATIR ÇOK ÖNEMLİ
-app.get("*", (req, res) => {
+// !!! DÜZELTİLEN KISIM BURASI !!!
+// "*" yerine /.*/ kullandık. Bu "ne gelirse gelsin" demenin daha güvenli yoludur.
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
