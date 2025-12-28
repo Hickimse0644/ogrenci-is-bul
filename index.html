@@ -2,332 +2,439 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>İş Bul | Kurumsal İş Uygulaması</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body class="bg-slate-50 font-sans">
+    <title>Gelişmiş Giriş ve Kayıt Sistemi</title>
+    <style>
+        /* --- GENEL SAYFA AYARLARI --- */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-    <nav class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-black tracking-tighter italic">🚀 İŞ BUL PRO</h1>
-            <div id="userInfo" class="flex items-center gap-3">
-                <span id="userBadge" class="text-[10px] bg-indigo-800 px-3 py-1 rounded-full font-bold">Misafir</span>
-                <button onclick="logout()" id="logoutBtn" class="hidden text-xs bg-red-500 px-2 py-1 rounded">Çıkış</button>
-            </div>
-        </div>
-    </nav>
+        /* --- FORM KUTUSU TASARIMI --- */
+        .container {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
 
-    <div class="container mx-auto p-4 max-w-2xl">
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        /* --- FORM ELEMANLARI --- */
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 6px;
+            box-sizing: border-box; /* Padding taşmasını engeller */
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        /* Input'a tıklandığında (focus) oluşan efekt */
+        input:focus {
+            border-color: #5865F2;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.1);
+        }
+
+        /* --- HATA MESAJLARI (DISCORD TARZI) --- */
+        .error-msg {
+            color: #ed4245; /* Discord kırmızısı */
+            font-size: 0.85rem;
+            margin-top: 6px;
+            display: none; /* Başlangıçta gizli */
+            font-weight: 500;
+        }
+
+        /* --- BUTONLAR --- */
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #5865F2; /* Discord mavisi */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #4752c4;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* --- LİNKLER VE GEÇİŞLER --- */
+        .toggle-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+        }
         
-        <div id="authModal" class="fixed inset-0 bg-indigo-950 z-[100] flex items-center justify-center p-6 text-white">
-            <div class="w-full max-w-md bg-white text-gray-800 p-8 rounded-[2rem] shadow-2xl">
-                <h2 class="text-3xl font-black text-indigo-700 mb-2 text-center">Hoş Geldiniz</h2>
-                <p class="text-center text-gray-500 text-sm mb-6">Lütfen hesabınıza giriş yapın veya kayıt olun.</p>
-                
-                <div class="space-y-4">
-                    <input id="authEmail" type="email" placeholder="E-posta Adresiniz" class="w-full p-4 bg-gray-100 rounded-2xl outline-none focus:ring-2 ring-indigo-500">
-                    <input id="authPass" type="password" placeholder="Şifreniz" class="w-full p-4 bg-gray-100 rounded-2xl outline-none focus:ring-2 ring-indigo-500">
-                    
-                    <div id="registerFields" class="hidden space-y-4 border-t pt-4">
-                        <select id="authUserType" class="w-full p-4 bg-gray-100 rounded-2xl outline-none">
-                            <option value="seeker">İş Arıyorum</option>
-                            <option value="employer">İş Verenim</option>
-                        </select>
-                        <input id="authAge" type="number" placeholder="Yaşınız" class="w-full p-4 bg-gray-100 rounded-2xl outline-none">
-                    </div>
+        .toggle-link:hover {
+            color: #0056b3;
+        }
 
-                    <div class="flex gap-2">
-                        <button id="loginMainBtn" onclick="handleLogin()" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-lg">Giriş Yap</button>
-                        <button id="toggleRegBtn" onclick="toggleAuthMode()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-4 rounded-2xl">Kayıt Ol</button>
-                    </div>
-                </div>
+        /* --- ŞİFRE GÖSTER/GİZLE İKONU --- */
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            cursor: pointer;
+            color: #888;
+            font-size: 0.8rem;
+            user-select: none;
+            font-weight: bold;
+        }
+
+        .toggle-password:hover {
+            color: #333;
+        }
+
+        /* --- GİZLEME SINIFI --- */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div id="register-form">
+        <h2>Hesap Oluştur</h2>
+        
+        <div class="form-group">
+            <label for="reg-username">Kullanıcı Adı</label>
+            <input type="text" id="reg-username" placeholder="Kullanıcı adınızı belirleyin" autocomplete="off">
+            <div id="err-username" class="error-msg">Hata mesajı burada görünecek.</div>
+        </div>
+
+        <div class="form-group">
+            <label for="reg-email">E-posta Adresi</label>
+            <input type="email" id="reg-email" placeholder="ornek@email.com" autocomplete="off">
+            <div id="err-email" class="error-msg">Hata mesajı burada görünecek.</div>
+        </div>
+
+        <div class="form-group">
+            <label for="reg-age">Yaş</label>
+            <input type="number" id="reg-age" min="0" placeholder="Yaşınız">
+            <div id="err-age" class="error-msg">Hata mesajı burada görünecek.</div>
+        </div>
+
+        <div class="form-group">
+            <label for="reg-pass">Şifre (En az 8 karakter)</label>
+            <div class="password-wrapper">
+                <input type="password" id="reg-pass" placeholder="********">
+                <span class="toggle-password" onclick="togglePass('reg-pass', this)">GÖSTER</span>
             </div>
+            <div id="err-pass" class="error-msg">Hata mesajı burada görünecek.</div>
         </div>
 
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-black text-slate-800">Güncel İlanlar</h2>
-            <button id="postBtn" onclick="openPostModal()" class="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-bold hidden shadow-indigo-200 shadow-xl hover:scale-105 transition">İlan Yayınla</button>
+        <div class="form-group">
+            <label for="reg-pass-confirm">Şifre Tekrar</label>
+            <div class="password-wrapper">
+                <input type="password" id="reg-pass-confirm" placeholder="********">
+                <span class="toggle-password" onclick="togglePass('reg-pass-confirm', this)">GÖSTER</span>
+            </div>
+            <div id="err-pass-confirm" class="error-msg">Hata mesajı burada görünecek.</div>
         </div>
 
-        <div id="jobList" class="space-y-4 pb-20"></div>
+        <button onclick="registerUser()">Kayıt Ol</button>
+        <div class="toggle-link" onclick="switchForm('login')">Zaten hesabın var mı? Giriş Yap</div>
     </div>
 
-    <div id="postModal" class="fixed inset-0 bg-black bg-opacity-60 z-[110] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 id="modalTitle" class="font-black text-2xl mb-6 text-indigo-700">İlan Detayları</h3>
-            <input type="hidden" id="editingJobId"> <div class="space-y-4">
-                <input id="title" type="text" placeholder="İş Başlığı" class="w-full p-4 bg-gray-50 rounded-2xl border outline-none focus:border-indigo-500">
-                <div class="flex gap-2">
-                    <input id="salary" type="text" placeholder="Ücret" class="w-full p-4 bg-gray-50 rounded-2xl border">
-                    <input id="location" type="text" placeholder="Konum" class="w-full p-4 bg-gray-50 rounded-2xl border">
-                </div>
-                <div class="p-4 bg-indigo-50 rounded-2xl">
-                    <p class="text-xs font-bold text-indigo-600 mb-3 uppercase tracking-wider">Aranan Yaş Aralığı:</p>
-                    <div class="grid grid-cols-2 gap-2 text-sm font-semibold">
-                        <label class="flex items-center gap-2"><input type="checkbox" name="ageRange" value="18-24"> 18-24 Yaş</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="ageRange" value="25-35"> 25-35 Yaş</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="ageRange" value="35+"> 35+ Yaş</label>
-                    </div>
-                </div>
-                <input id="phone" type="text" placeholder="İletişim Tel" class="w-full p-4 bg-gray-50 rounded-2xl border">
-                <textarea id="description" placeholder="Şartlar ve detaylar..." class="w-full p-4 bg-gray-50 rounded-2xl border h-32 outline-none"></textarea>
-                
-                <div class="flex gap-3 pt-2">
-                    <button id="saveJobBtn" onclick="saveJob()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-extrabold shadow-lg">Yayınla / Güncelle</button>
-                    <button onclick="closePostModal()" class="w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold">Kapat</button>
-                </div>
-            </div>
+
+    <div id="login-form" class="hidden">
+        <h2>Giriş Yap</h2>
+        
+        <div class="form-group">
+            <label for="login-input">E-posta veya Kullanıcı Adı</label>
+            <input type="text" id="login-input" placeholder="Kullanıcı adı veya e-posta girin">
+            <div id="err-login-input" class="error-msg">Hata mesajı burada görünecek.</div>
         </div>
+
+        <div class="form-group">
+            <label for="login-pass">Şifre</label>
+            <div class="password-wrapper">
+                <input type="password" id="login-pass" placeholder="********">
+                <span class="toggle-password" onclick="togglePass('login-pass', this)">GÖSTER</span>
+            </div>
+            <div id="err-login-pass" class="error-msg">Hata mesajı burada görünecek.</div>
+        </div>
+
+        <button onclick="loginUser()">Giriş Yap</button>
+        <div class="toggle-link" onclick="switchForm('register')">Hesabın yok mu? Hesap Oluştur</div>
     </div>
 
-    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 z-[120] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-xs rounded-[2rem] p-6 shadow-2xl text-center">
-            <h3 class="font-bold text-xl mb-4 text-indigo-700">Başvuru Yap</h3>
-            <textarea id="msgText" placeholder="Kısaca kendinden bahset..." class="w-full p-4 bg-gray-50 rounded-2xl border h-32 outline-none mb-4"></textarea>
-            <input type="hidden" id="currentJobId">
-            <div class="flex gap-2">
-                <button onclick="sendMessage()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Gönder</button>
-                <button onclick="document.getElementById('messageModal').classList.add('hidden')" class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold">İptal</button>
-            </div>
-        </div>
-    </div>
+</div>
 
-    <div id="inboxModal" class="fixed inset-0 bg-black bg-opacity-50 z-[120] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[2rem] p-8 shadow-2xl max-h-[80vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-black text-xl text-indigo-700">Gelen Başvurular</h3>
-                <button onclick="document.getElementById('inboxModal').classList.add('hidden')" class="text-gray-400 text-2xl"><i class="fa-solid fa-x"></i></button>
-            </div>
-            <div id="messageList" class="space-y-4"></div>
-        </div>
-    </div>
+<script>
+    /**
+     * VERİTABANI İŞLEMLERİ (LocalStorage)
+     * Gerçek bir projede bu veriler sunucuda (backend) tutulur.
+     * Burada tarayıcı hafızasını kullanarak kalıcı kayıt yapıyoruz.
+     */
+    
+    // Kayıtlı kullanıcıları getir
+    function getUsers() {
+        const users = localStorage.getItem('users_db');
+        return users ? JSON.parse(users) : [];
+    }
 
-    <script>
-        // OTURUM BİLGİLERİ (Tarayıcı hafızasında tutulur)
-        let currentUser = null;
-        let isRegisterMode = false;
+    // Yeni kullanıcı kaydet
+    function saveUser(userObj) {
+        const users = getUsers();
+        users.push(userObj);
+        localStorage.setItem('users_db', JSON.stringify(users));
+    }
 
-        // Sayfa açıldığında oturum kontrolü yap
-        window.onload = () => {
-            const savedUser = localStorage.getItem('user');
-            if(savedUser) {
-                currentUser = JSON.parse(savedUser);
-                document.getElementById('authModal').classList.add('hidden');
-                initApp();
+    /**
+     * YARDIMCI FONKSİYONLAR
+     */
+
+    // Hata mesajını göster (inputun altındaki kırmızı yazı)
+    function showError(elementId, message) {
+        const el = document.getElementById(elementId);
+        el.innerText = message;
+        el.style.display = 'block';
+        
+        // Hata alan inputun kenarlığını kırmızı yap
+        // Bu özellik inputun parent elementindeki label'ın kardeşini bulur vs.
+        // Basitlik için sadece metni gösteriyoruz ama istenirse inputa .error class'ı da eklenebilir.
+    }
+
+    // Tüm hataları temizle
+    function clearErrors() {
+        const errors = document.querySelectorAll('.error-msg');
+        errors.forEach(err => {
+            err.style.display = 'none';
+            err.innerText = '';
+        });
+    }
+
+    // E-posta formatı doğrulama (Regex)
+    // Sadece "blah" yazılmasını engeller, "@" ve "." arar.
+    function validateEmail(email) {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(String(email).toLowerCase());
+    }
+
+    // Şifre Göster/Gizle İşlevi
+    function togglePass(inputId, btnElement) {
+        const input = document.getElementById(inputId);
+        if (input.type === "password") {
+            input.type = "text";
+            btnElement.innerText = "GİZLE";
+        } else {
+            input.type = "password";
+            btnElement.innerText = "GÖSTER";
+        }
+    }
+
+    // Formlar arası geçiş (Giriş <-> Kayıt)
+    function switchForm(target) {
+        clearErrors(); // Geçiş yaparken eski hataları temizle
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+
+        if(target === 'login') {
+            registerForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+        } else {
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+        }
+    }
+
+    /**
+     * KAYIT OLMA FONKSİYONU
+     * Tüm validasyonlar (doğrulamalar) burada yapılır.
+     */
+    function registerUser() {
+        // Önce temizlik
+        clearErrors();
+        
+        // Değerleri al
+        const username = document.getElementById('reg-username').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const age = document.getElementById('reg-age').value;
+        const pass = document.getElementById('reg-pass').value;
+        const passConfirm = document.getElementById('reg-pass-confirm').value;
+
+        let hasError = false;
+
+        // 1. Kullanıcı Adı Kontrolü
+        if (username === "") {
+            showError('err-username', 'Kullanıcı adı boş bırakılamaz.');
+            hasError = true;
+        } else if (username.length < 3) {
+            showError('err-username', 'Kullanıcı adı en az 3 karakter olmalıdır.');
+            hasError = true;
+        }
+
+        // 2. E-posta Format Kontrolü
+        if (email === "") {
+            showError('err-email', 'E-posta alanı boş bırakılamaz.');
+            hasError = true;
+        } else if (!validateEmail(email)) {
+            showError('err-email', 'Geçersiz e-posta adresi. Lütfen kontrol edin.');
+            hasError = true;
+        }
+
+        // 3. Yaş Kontrolü
+        if (age === "") {
+            showError('err-age', 'Lütfen yaşınızı girin.');
+            hasError = true;
+        } else {
+            const ageNum = parseInt(age);
+            if (ageNum < 0) {
+                showError('err-age', 'Yaş negatif olamaz! Lütfen düzeltin.');
+                hasError = true;
+            } else if (ageNum > 120) {
+                showError('err-age', 'Lütfen geçerli bir yaş girin.');
+                hasError = true;
             }
+        }
+
+        // 4. Şifre Uzunluk Kontrolü
+        if (pass.length < 8) {
+            showError('err-pass', 'Şifre en az 8 karakterden oluşmalıdır.');
+            hasError = true;
+        }
+
+        // 5. Şifre Eşleşme Kontrolü
+        if (pass !== passConfirm) {
+            showError('err-pass-confirm', 'Girdiğiniz şifreler birbiriyle uyuşmuyor.');
+            hasError = true;
+        }
+
+        // Eğer yukarıdaki kontrollerden herhangi biri takıldıysa işlemi durdur.
+        if (hasError) return;
+
+        // 6. Veritabanı Kontrolü (Aynı e-posta veya kullanıcı adı var mı?)
+        const users = getUsers();
+        
+        const emailExists = users.some(u => u.email === email);
+        if (emailExists) {
+            showError('err-email', 'Bu e-posta adresi zaten kayıtlı.');
+            return;
+        }
+
+        const usernameExists = users.some(u => u.username === username);
+        if (usernameExists) {
+            showError('err-username', 'Bu kullanıcı adı başkası tarafından alınmış.');
+            return;
+        }
+
+        // --- HER ŞEY BAŞARILI ---
+        
+        // Simüle edilmiş kod gönderme işlemi
+        alert(`Kayıt işleminiz başarılı!\n\nGüvenlik kodu şu adrese gönderildi: ${email}\n(Kod: 123456 - Simülasyon)`);
+
+        // Kullanıcıyı kaydet
+        const newUser = {
+            id: Date.now(), // Benzersiz ID
+            username: username,
+            email: email,
+            age: age,
+            pass: pass // Not: Gerçekte şifreler kriptolanmalıdır!
         };
+        
+        saveUser(newUser);
 
-        // GİRİŞ/KAYIT MODU DEĞİŞTİRME
-        function toggleAuthMode() {
-            isRegisterMode = !isRegisterMode;
-            document.getElementById('registerFields').classList.toggle('hidden');
-            document.getElementById('loginMainBtn').innerText = isRegisterMode ? 'Kayıt Ol ve Gir' : 'Giriş Yap';
-            document.getElementById('toggleRegBtn').innerText = isRegisterMode ? 'Vazgeç' : 'Hesap Oluştur';
+        // Formu temizle ve Giriş ekranına yönlendir
+        document.getElementById('reg-username').value = '';
+        document.getElementById('reg-email').value = '';
+        document.getElementById('reg-age').value = '';
+        document.getElementById('reg-pass').value = '';
+        document.getElementById('reg-pass-confirm').value = '';
+        
+        switchForm('login');
+    }
+
+    /**
+     * GİRİŞ YAPMA FONKSİYONU
+     */
+    function loginUser() {
+        clearErrors();
+
+        const input = document.getElementById('login-input').value.trim();
+        const pass = document.getElementById('login-pass').value;
+
+        if (input === "") {
+            showError('err-login-input', 'Lütfen e-posta veya kullanıcı adınızı girin.');
+            return;
+        }
+        
+        if (pass === "") {
+            showError('err-login-pass', 'Lütfen şifrenizi girin.');
+            return;
         }
 
-        // GİRİŞ VE KAYIT İŞLEMİ
-        async function handleLogin() {
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPass').value;
-            
-            if(!email || !password) return alert("Bilgileri eksiksiz girin!");
+        const users = getUsers();
+        
+        // Kullanıcıyı bul (Hem email hem username kontrolü)
+        const user = users.find(u => u.email === input || u.username === input);
 
-            if(isRegisterMode) {
-                // Kayıt Ol
-                const age = document.getElementById('authAge').value;
-                const user_type = document.getElementById('authUserType').value;
-                const res = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ email, password, user_type, age: parseInt(age) })
-                });
-                const data = await res.json();
-                if(data.error) return alert(data.error);
-                currentUser = { email, user_type, age: parseInt(age) };
-            } else {
-                // Giriş Yap
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await res.json();
-                if(data.error) return alert(data.error);
-                currentUser = data;
-            }
-
-            localStorage.setItem('user', JSON.stringify(currentUser));
-            document.getElementById('authModal').classList.add('hidden');
-            initApp();
+        if (!user) {
+            // Güvenlik gereği "Böyle bir kullanıcı yok" yerine genel hata da verilebilir ama 
+            // isteğin üzerine spesifik uyarı veriyoruz.
+            showError('err-login-input', 'Bu bilgilere ait bir kullanıcı bulunamadı.');
+            return;
         }
 
-        function logout() {
-            localStorage.clear();
-            location.reload();
+        // Şifre kontrolü
+        if (user.pass === pass) {
+            alert('Giriş Başarılı! Hoşgeldin, ' + user.username);
+            // Başarılı girişten sonra yapılacak işlemler buraya...
+            // window.location.href = '/dashboard'; gibi.
+        } else {
+            showError('err-login-pass', 'Girdiğiniz şifre hatalı.');
         }
+    }
+</script>
 
-        function initApp() {
-            document.getElementById('logoutBtn').classList.remove('hidden');
-            document.getElementById('userBadge').innerText = currentUser.user_type === 'seeker' ? `👤 Arayan (${currentUser.age} Yaş)` : `💼 İş Veren (${currentUser.email})`;
-            if(currentUser.user_type === 'employer') {
-                document.getElementById('postBtn').classList.remove('hidden');
-            }
-            loadJobs();
-        }
-
-        // İLANLARI YÜKLEME
-        async function loadJobs() {
-            const res = await fetch('/api/jobs');
-            const jobs = await res.json();
-            const list = document.getElementById('jobList');
-            
-            list.innerHTML = jobs.map(j => {
-                let ageFit = true;
-                if(currentUser.user_type === 'seeker') {
-                    const ranges = j.age_range.split(', ');
-                    ageFit = ranges.some(r => {
-                        if(r === '35+' && currentUser.age >= 35) return true;
-                        const [min, max] = r.split('-').map(Number);
-                        return currentUser.age >= min && currentUser.age <= max;
-                    });
-                }
-
-                // İlanın sahibi biz miyiz? (Düzenleme butonu için)
-                const isOwner = currentUser.email === j.owner_email;
-
-                return `
-                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-3">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <h3 class="font-extrabold text-xl text-indigo-900 leading-none">${j.title}</h3>
-                            <div class="flex flex-wrap gap-2 mt-3">
-                                <span class="text-[10px] bg-indigo-50 text-indigo-600 font-bold px-3 py-1 rounded-full"><i class="fa-solid fa-map-pin"></i> ${j.location}</span>
-                                <span class="text-[10px] bg-orange-50 text-orange-600 font-bold px-3 py-1 rounded-full"><i class="fa-solid fa-users"></i> ${j.age_range}</span>
-                            </div>
-                        </div>
-                        <span class="text-green-600 font-black text-xl">${j.salary}</span>
-                    </div>
-                    <p class="text-sm text-gray-500 font-medium">${j.description}</p>
-                    
-                    ${!ageFit ? `<p class="text-red-500 text-[10px] font-bold italic underline">⚠️ Yaşınız uygun değil.</p>` : ''}
-
-                    <div class="flex gap-2 mt-4">
-                        ${currentUser.user_type === 'seeker' ? `
-                            <a href="tel:${j.phone}" class="flex-1 bg-indigo-50 text-indigo-700 text-center py-4 rounded-2xl text-xs font-black">ARA</a>
-                            <button onclick="openMessageModal(${j.id})" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl text-xs font-black shadow-md">MESAJ GÖNDER</button>
-                        ` : (isOwner ? `
-                            <button onclick="showMessages(${j.id})" class="flex-1 bg-indigo-50 text-indigo-700 py-4 rounded-2xl text-xs font-black">GELENLER</button>
-                            <button onclick="openEditModal(${JSON.stringify(j).replace(/"/g, '&quot;')})" class="flex-1 bg-orange-500 text-white py-4 rounded-2xl text-xs font-black shadow-md">DÜZENLE</button>
-                        ` : `<button disabled class="flex-1 bg-gray-100 text-gray-400 py-4 rounded-2xl text-xs font-black">BAŞKASININ İLANI</button>`)}
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        // İLAN EKLEME VE DÜZENLEME MANTIĞI
-        function openPostModal() {
-            document.getElementById('editingJobId').value = ''; // ID boşsa 'Ekleme' modudur
-            document.getElementById('modalTitle').innerText = "Yeni İlan";
-            clearForm();
-            document.getElementById('postModal').classList.remove('hidden');
-        }
-
-        function openEditModal(jobData) {
-            document.getElementById('editingJobId').value = jobData.id;
-            document.getElementById('modalTitle').innerText = "İlanı Düzenle";
-            document.getElementById('title').value = jobData.title;
-            document.getElementById('salary').value = jobData.salary;
-            document.getElementById('location').value = jobData.location;
-            document.getElementById('phone').value = jobData.phone;
-            document.getElementById('description').value = jobData.description;
-            // Yaş aralıklarını tikle
-            const ranges = jobData.age_range.split(', ');
-            document.querySelectorAll('input[name="ageRange"]').forEach(cb => {
-                cb.checked = ranges.includes(cb.value);
-            });
-            document.getElementById('postModal').classList.remove('hidden');
-        }
-
-        async function saveJob() {
-            const editingId = document.getElementById('editingJobId').value;
-            const selectedAges = Array.from(document.querySelectorAll('input[name="ageRange"]:checked')).map(c => c.value);
-            
-            const data = {
-                owner_email: currentUser.email,
-                title: document.getElementById('title').value,
-                salary: document.getElementById('salary').value,
-                location: document.getElementById('location').value,
-                phone: document.getElementById('phone').value,
-                description: document.getElementById('description').value,
-                age_range: selectedAges.join(', ')
-            };
-
-            const method = editingId ? 'PUT' : 'POST';
-            const url = editingId ? `/api/jobs/${editingId}` : '/api/jobs';
-
-            await fetch(url, {
-                method: method,
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-
-            closePostModal();
-            loadJobs();
-        }
-
-        function clearForm() {
-            document.getElementById('title').value = '';
-            document.getElementById('salary').value = '';
-            document.getElementById('location').value = '';
-            document.getElementById('phone').value = '';
-            document.getElementById('description').value = '';
-            document.querySelectorAll('input[name="ageRange"]').forEach(cb => cb.checked = false);
-        }
-
-        function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
-
-        // MESAJ SİSTEMİ
-        function openMessageModal(jobId) {
-            document.getElementById('currentJobId').value = jobId;
-            document.getElementById('messageModal').classList.remove('hidden');
-        }
-
-        async function sendMessage() {
-            const data = {
-                job_id: document.getElementById('currentJobId').value,
-                sender_email: currentUser.email,
-                sender_age: currentUser.age,
-                message_text: document.getElementById('msgText').value
-            };
-            await fetch('/api/messages', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            alert("Mesaj iletildi!");
-            document.getElementById('messageModal').classList.add('hidden');
-            document.getElementById('msgText').value = '';
-        }
-
-        async function showMessages(jobId) {
-            const res = await fetch(`/api/messages/${jobId}`);
-            const messages = await res.json();
-            const list = document.getElementById('messageList');
-            document.getElementById('inboxModal').classList.remove('hidden');
-            
-            list.innerHTML = messages.length === 0 ? '<p class="text-center text-gray-400">Henüz başvuru yok.</p>' : 
-            messages.map(m => `
-                <div class="bg-gray-50 p-5 rounded-2xl border border-indigo-100">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-black">ADAY: ${m.sender_age} YAŞ</span>
-                        <span class="text-[10px] text-gray-400 font-bold">${m.sender_email}</span>
-                    </div>
-                    <p class="text-sm text-gray-700 italic font-medium leading-relaxed">"${m.message_text}"</p>
-                </div>
-            `).join('');
-        }
-    </script>
 </body>
 </html>

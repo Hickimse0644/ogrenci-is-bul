@@ -140,3 +140,14 @@ app.get(/.*/, (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Sunucu http://localhost:${PORT} adresinde çalışıyor!`));
+const regexPass = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+if (!regexPass.test(pass)) {
+    showError('err-pass', 'Şifre en az bir büyük harf ve bir rakam içermeli.');
+}
+document.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        // Hangi form açıksa onun fonksiyonunu çalıştır
+        const isLoginHidden = document.getElementById('login-form').classList.contains('hidden');
+        if(isLoginHidden) registerUser(); else loginUser();
+    }
+});
