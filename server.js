@@ -11,8 +11,8 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
 
-// Veritabanına 'age_range' sütununu ekledik
 db.serialize(() => {
+  // İlanlar tablosu
   db.run(`CREATE TABLE IF NOT EXISTS jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT,
@@ -22,34 +22,50 @@ db.serialize(() => {
     description TEXT,
     age_range TEXT
   )`);
+
+  // MESAJLAR TABLOSU (Yeni eklendi)
+  db.run(`CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id INTEGER,
+    sender_age INTEGER,
+    message_text TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
 });
 
-// Güvenlik: Basit bir koruma katmanı (Sadece JSON bekler)
-app.use((req, res, next) => {
-  if (req.method === 'POST' && !req.is('json')) {
-    return res.status(400).send('Sadece JSON kabul edilir.');
-  }
-  next();
-});
-
+// İLANLARI GETİR
 app.get("/api/jobs", (req, res) => {
   db.all("SELECT * FROM jobs ORDER BY id DESC", (err, rows) => {
     res.json(rows);
   });
 });
 
+// İLAN EKLE
 app.post("/api/jobs", (req, res) => {
   const { title, salary, location, phone, description, age_range } = req.body;
-  // Güvenlik: Basit boş veri kontrolü
-  if(!title || !phone) return res.status(400).json({error: "Eksik alan!"});
-
   db.run(
     "INSERT INTO jobs (title, salary, location, phone, description, age_range) VALUES (?,?,?,?,?,?)",
     [title, salary, location, phone, description, age_range],
-    function(err) {
-      res.json({ id: this.lastID });
-    }
+    function(err) { res.json({ id: this.lastID }); }
   );
+});
+
+// MESAJ GÖNDER
+app.post("/api/messages", (req, res) => {
+  const { job_id, sender_age, message_text } = req.body;
+  db.run(
+    "INSERT INTO messages (job_id, sender_age, message_text) VALUES (?,?,?)",
+    [job_id, sender_age, message_text],
+    function(err) { res.json({ status: "Mesaj gönderildi!" }); }
+  );
+});
+
+// MESAJLARI GETİR (İşveren için)
+app.get("/api/messages/:job_id", (req, res) => {
+  const jobId = req.params.job_id;
+  db.all("SELECT * FROM messages WHERE job_id = ? ORDER BY timestamp DESC", [jobId], (err, rows) => {
+    res.json(rows);
+  });
 });
 
 app.get("*", (req, res) => {
