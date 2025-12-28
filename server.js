@@ -13,7 +13,7 @@
    4. Bu dosyayı server.js olarak kaydet
    5. node server.js ile çalıştır
 */
-
+const path = require("path");
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const bodyParser = require("body-parser");
@@ -22,6 +22,9 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname)));
 
 // =========================
 // VERİTABANI
@@ -62,6 +65,9 @@ app.get("/jobs", (req, res) => {
 // =========================
 // SERVER
 // =========================
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
 app.listen(3000, () => {
   console.log("Server çalışıyor: http://localhost:3000");
 });
