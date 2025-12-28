@@ -3,185 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>İş Bul | Hızlı ve Güvenli</title>
+    <title>İş Bul | Kurumsal İş Uygulaması</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-50">
-    <nav class="bg-indigo-700 text-white p-4 shadow-md sticky top-0 z-50">
+<body class="bg-slate-50 font-sans">
+
+    <nav class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold italic">🚀 İŞ BUL</h1>
-            <div id="userBadge" class="text-xs bg-indigo-800 px-3 py-1 rounded-full font-semibold"></div>
+            <h1 class="text-xl font-black tracking-tighter italic">🚀 İŞ BUL PRO</h1>
+            <div id="userInfo" class="flex items-center gap-3">
+                <span id="userBadge" class="text-[10px] bg-indigo-800 px-3 py-1 rounded-full font-bold">Misafir</span>
+                <button onclick="logout()" id="logoutBtn" class="hidden text-xs bg-red-500 px-2 py-1 rounded">Çıkış</button>
+            </div>
         </div>
     </nav>
 
     <div class="container mx-auto p-4 max-w-2xl">
-        <div id="loginModal" class="fixed inset-0 bg-indigo-900 z-[60] flex items-center justify-center p-6 text-white">
-            <div class="text-center max-w-sm">
-                <h2 class="text-3xl font-bold mb-6">Hoş Geldin!</h2>
+        
+        <div id="authModal" class="fixed inset-0 bg-indigo-950 z-[100] flex items-center justify-center p-6 text-white">
+            <div class="w-full max-w-md bg-white text-gray-800 p-8 rounded-[2rem] shadow-2xl">
+                <h2 class="text-3xl font-black text-indigo-700 mb-2 text-center">Hoş Geldiniz</h2>
+                <p class="text-center text-gray-500 text-sm mb-6">Lütfen hesabınıza giriş yapın veya kayıt olun.</p>
+                
                 <div class="space-y-4">
-                    <button onclick="startApp('seeker')" class="w-full bg-white text-indigo-700 font-bold py-4 rounded-2xl shadow-xl">İş Arıyorum</button>
-                    <button onclick="startApp('employer')" class="w-full bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-xl border border-indigo-400">İş Verenim</button>
-                </div>
-            </div>
-        </div>
+                    <input id="authEmail" type="email" placeholder="E-posta Adresiniz" class="w-full p-4 bg-gray-100 rounded-2xl outline-none focus:ring-2 ring-indigo-500">
+                    <input id="authPass" type="password" placeholder="Şifreniz" class="w-full p-4 bg-gray-100 rounded-2xl outline-none focus:ring-2 ring-indigo-500">
+                    
+                    <div id="registerFields" class="hidden space-y-4 border-t pt-4">
+                        <select id="authUserType" class="w-full p-4 bg-gray-100 rounded-2xl outline-none">
+                            <option value="seeker">İş Arıyorum</option>
+                            <option value="employer">İş Verenim</option>
+                        </select>
+                        <input id="authAge" type="number" placeholder="Yaşınız" class="w-full p-4 bg-gray-100 rounded-2xl outline-none">
+                    </div>
 
-        <div id="ageModal" class="fixed inset-0 bg-black bg-opacity-80 z-[70] hidden flex items-center justify-center p-6">
-            <div class="bg-white p-6 rounded-3xl text-center w-full max-w-xs">
-                <h3 class="text-gray-800 font-bold mb-4 text-lg text-indigo-600">Kaç yaşındasın?</h3>
-                <input id="userAge" type="number" class="w-full border-2 border-indigo-100 rounded-xl p-3 text-center text-2xl font-bold mb-4 focus:border-indigo-500 outline-none" placeholder="20">
-                <button onclick="saveAge()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition">Uygulamaya Gir</button>
+                    <div class="flex gap-2">
+                        <button id="loginMainBtn" onclick="handleLogin()" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-lg">Giriş Yap</button>
+                        <button id="toggleRegBtn" onclick="toggleAuthMode()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-4 rounded-2xl">Kayıt Ol</button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-extrabold text-gray-800 tracking-tight">İlanlar</h2>
-            <button id="postBtn" onclick="openPostModal()" class="bg-indigo-600 text-white px-5 py-2 rounded-full font-bold hidden shadow-lg hover:scale-105 transition">İlan Ver</button>
+            <h2 class="text-2xl font-black text-slate-800">Güncel İlanlar</h2>
+            <button id="postBtn" onclick="openPostModal()" class="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-bold hidden shadow-indigo-200 shadow-xl hover:scale-105 transition">İlan Yayınla</button>
         </div>
 
-        <div id="jobList" class="space-y-4 pb-20 text-indigo-900"></div>
+        <div id="jobList" class="space-y-4 pb-20"></div>
     </div>
 
-    <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 class="font-bold text-xl mb-4 text-indigo-700 border-b pb-2">İş Detayları</h3>
-            <div class="space-y-4">
-                <input id="title" type="text" placeholder="İş Başlığı (Örn: Paket Servis)" class="w-full p-3 bg-gray-50 rounded-xl border focus:border-indigo-500 outline-none">
+    <div id="postModal" class="fixed inset-0 bg-black bg-opacity-60 z-[110] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 id="modalTitle" class="font-black text-2xl mb-6 text-indigo-700">İlan Detayları</h3>
+            <input type="hidden" id="editingJobId"> <div class="space-y-4">
+                <input id="title" type="text" placeholder="İş Başlığı" class="w-full p-4 bg-gray-50 rounded-2xl border outline-none focus:border-indigo-500">
                 <div class="flex gap-2">
-                    <input id="salary" type="text" placeholder="Ücret" class="w-full p-3 bg-gray-50 rounded-xl border focus:border-indigo-500 outline-none">
-                    <input id="location" type="text" placeholder="Konum" class="w-full p-3 bg-gray-50 rounded-xl border focus:border-indigo-500 outline-none">
+                    <input id="salary" type="text" placeholder="Ücret" class="w-full p-4 bg-gray-50 rounded-2xl border">
+                    <input id="location" type="text" placeholder="Konum" class="w-full p-4 bg-gray-50 rounded-2xl border">
                 </div>
-                
-                <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-100">
-                    <p class="text-xs font-bold text-indigo-600 mb-2">Uygun Yaş Aralıkları:</p>
-                    <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="p-4 bg-indigo-50 rounded-2xl">
+                    <p class="text-xs font-bold text-indigo-600 mb-3 uppercase tracking-wider">Aranan Yaş Aralığı:</p>
+                    <div class="grid grid-cols-2 gap-2 text-sm font-semibold">
                         <label class="flex items-center gap-2"><input type="checkbox" name="ageRange" value="18-24"> 18-24 Yaş</label>
                         <label class="flex items-center gap-2"><input type="checkbox" name="ageRange" value="25-35"> 25-35 Yaş</label>
                         <label class="flex items-center gap-2"><input type="checkbox" name="ageRange" value="35+"> 35+ Yaş</label>
                     </div>
                 </div>
-
-                <input id="phone" type="text" placeholder="İletişim Numarası" class="w-full p-3 bg-gray-50 rounded-xl border focus:border-indigo-500 outline-none">
-                <textarea id="description" placeholder="Aranan şartlar ve iş detayları..." class="w-full p-3 bg-gray-50 rounded-xl border h-24 focus:border-indigo-500 outline-none"></textarea>
+                <input id="phone" type="text" placeholder="İletişim Tel" class="w-full p-4 bg-gray-50 rounded-2xl border">
+                <textarea id="description" placeholder="Şartlar ve detaylar..." class="w-full p-4 bg-gray-50 rounded-2xl border h-32 outline-none"></textarea>
                 
-                <div class="flex gap-2 pt-2">
-                    <button onclick="addJob()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg">Yayınla</button>
-                    <button onclick="closePostModal()" class="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">Kapat</button>
+                <div class="flex gap-3 pt-2">
+                    <button id="saveJobBtn" onclick="saveJob()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-extrabold shadow-lg">Yayınla / Güncelle</button>
+                    <button onclick="closePostModal()" class="w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold">Kapat</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 z-[90] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl">
-            <h3 class="font-bold text-lg mb-4 text-indigo-700">Mesaj Gönder</h3>
-            <textarea id="msgText" placeholder="Merhaba, iş ile ilgileniyorum..." class="w-full p-3 bg-gray-50 rounded-xl border h-32 focus:border-indigo-500 outline-none mb-4"></textarea>
+    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 z-[120] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-[2rem] p-6 shadow-2xl text-center">
+            <h3 class="font-bold text-xl mb-4 text-indigo-700">Başvuru Yap</h3>
+            <textarea id="msgText" placeholder="Kısaca kendinden bahset..." class="w-full p-4 bg-gray-50 rounded-2xl border h-32 outline-none mb-4"></textarea>
             <input type="hidden" id="currentJobId">
             <div class="flex gap-2">
-                <button onclick="sendMessage()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg">Gönder</button>
-                <button onclick="document.getElementById('messageModal').classList.add('hidden')" class="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">İptal</button>
+                <button onclick="sendMessage()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Gönder</button>
+                <button onclick="document.getElementById('messageModal').classList.add('hidden')" class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold">İptal</button>
             </div>
         </div>
     </div>
 
-    <div id="inboxModal" class="fixed inset-0 bg-black bg-opacity-50 z-[90] hidden flex items-center justify-center p-4 text-indigo-900">
-        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl max-h-[80vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-lg text-indigo-700">Gelen Başvurular</h3>
-                <button onclick="document.getElementById('inboxModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+    <div id="inboxModal" class="fixed inset-0 bg-black bg-opacity-50 z-[120] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2rem] p-8 shadow-2xl max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-black text-xl text-indigo-700">Gelen Başvurular</h3>
+                <button onclick="document.getElementById('inboxModal').classList.add('hidden')" class="text-gray-400 text-2xl"><i class="fa-solid fa-x"></i></button>
             </div>
-            <div id="messageList" class="space-y-3">
-                </div>
+            <div id="messageList" class="space-y-4"></div>
         </div>
     </div>
 
     <script>
-        let userType = '';
-        let userAge = 0;
+        // OTURUM BİLGİLERİ (Tarayıcı hafızasında tutulur)
+        let currentUser = null;
+        let isRegisterMode = false;
 
-        // Uygulamayı Başlatma (İş Arayan / İşveren Seçimi)
-        function startApp(type) {
-            userType = type;
-            document.getElementById('loginModal').classList.add('hidden');
-            if(type === 'seeker') {
-                document.getElementById('ageModal').classList.remove('hidden');
-            } else {
-                document.getElementById('postBtn').classList.remove('hidden');
-                updateUI();
+        // Sayfa açıldığında oturum kontrolü yap
+        window.onload = () => {
+            const savedUser = localStorage.getItem('user');
+            if(savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('authModal').classList.add('hidden');
+                initApp();
             }
+        };
+
+        // GİRİŞ/KAYIT MODU DEĞİŞTİRME
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('registerFields').classList.toggle('hidden');
+            document.getElementById('loginMainBtn').innerText = isRegisterMode ? 'Kayıt Ol ve Gir' : 'Giriş Yap';
+            document.getElementById('toggleRegBtn').innerText = isRegisterMode ? 'Vazgeç' : 'Hesap Oluştur';
         }
 
-        // Kullanıcı Yaşını Kaydetme
-        function saveAge() {
-            userAge = parseInt(document.getElementById('userAge').value);
-            if(!userAge) return alert("Lütfen yaşını gir!");
-            document.getElementById('ageModal').classList.add('hidden');
-            updateUI();
+        // GİRİŞ VE KAYIT İŞLEMİ
+        async function handleLogin() {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPass').value;
+            
+            if(!email || !password) return alert("Bilgileri eksiksiz girin!");
+
+            if(isRegisterMode) {
+                // Kayıt Ol
+                const age = document.getElementById('authAge').value;
+                const user_type = document.getElementById('authUserType').value;
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password, user_type, age: parseInt(age) })
+                });
+                const data = await res.json();
+                if(data.error) return alert(data.error);
+                currentUser = { email, user_type, age: parseInt(age) };
+            } else {
+                // Giriş Yap
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if(data.error) return alert(data.error);
+                currentUser = data;
+            }
+
+            localStorage.setItem('user', JSON.stringify(currentUser));
+            document.getElementById('authModal').classList.add('hidden');
+            initApp();
         }
 
-        // Arayüzü Güncelleme (Badge Ayarı)
-        function updateUI() {
-            document.getElementById('userBadge').innerText = userType === 'seeker' ? `👤 Arayan (${userAge} Yaş)` : '💼 İş Veren';
+        function logout() {
+            localStorage.clear();
+            location.reload();
+        }
+
+        function initApp() {
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            document.getElementById('userBadge').innerText = currentUser.user_type === 'seeker' ? `👤 Arayan (${currentUser.age} Yaş)` : `💼 İş Veren (${currentUser.email})`;
+            if(currentUser.user_type === 'employer') {
+                document.getElementById('postBtn').classList.remove('hidden');
+            }
             loadJobs();
         }
 
-        // İlanları Sunucudan Çekme ve Listeleme
+        // İLANLARI YÜKLEME
         async function loadJobs() {
             const res = await fetch('/api/jobs');
             const jobs = await res.json();
             const list = document.getElementById('jobList');
             
             list.innerHTML = jobs.map(j => {
-                // Yaş Uygunluk Kontrolü
-                let isAgeFit = true;
-                if(userType === 'seeker') {
+                let ageFit = true;
+                if(currentUser.user_type === 'seeker') {
                     const ranges = j.age_range.split(', ');
-                    isAgeFit = ranges.some(range => {
-                        if(range === '35+' && userAge >= 35) return true;
-                        const [min, max] = range.split('-').map(Number);
-                        return userAge >= min && userAge <= max;
+                    ageFit = ranges.some(r => {
+                        if(r === '35+' && currentUser.age >= 35) return true;
+                        const [min, max] = r.split('-').map(Number);
+                        return currentUser.age >= min && currentUser.age <= max;
                     });
                 }
 
+                // İlanın sahibi biz miyiz? (Düzenleme butonu için)
+                const isOwner = currentUser.email === j.owner_email;
+
                 return `
-                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex flex-col gap-3 transition hover:shadow-md">
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-3">
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
-                            <h3 class="font-bold text-lg text-indigo-900 leading-tight">${j.title}</h3>
-                            <div class="flex flex-wrap gap-2 mt-2">
-                                <span class="text-[10px] bg-indigo-50 text-indigo-600 font-bold px-2 py-0.5 rounded-full"><i class="fa-solid fa-location-dot"></i> ${j.location}</span>
-                                <span class="text-[10px] bg-orange-50 text-orange-600 font-bold px-2 py-0.5 rounded-full"><i class="fa-solid fa-user-tag"></i> ${j.age_range}</span>
+                            <h3 class="font-extrabold text-xl text-indigo-900 leading-none">${j.title}</h3>
+                            <div class="flex flex-wrap gap-2 mt-3">
+                                <span class="text-[10px] bg-indigo-50 text-indigo-600 font-bold px-3 py-1 rounded-full"><i class="fa-solid fa-map-pin"></i> ${j.location}</span>
+                                <span class="text-[10px] bg-orange-50 text-orange-600 font-bold px-3 py-1 rounded-full"><i class="fa-solid fa-users"></i> ${j.age_range}</span>
                             </div>
                         </div>
-                        <span class="text-green-600 font-extrabold text-lg">${j.salary}</span>
+                        <span class="text-green-600 font-black text-xl">${j.salary}</span>
                     </div>
-                    <p class="text-sm text-gray-600">${j.description}</p>
+                    <p class="text-sm text-gray-500 font-medium">${j.description}</p>
                     
-                    ${!isAgeFit ? `<p class="text-red-500 text-[10px] font-bold italic">⚠️ Yaş aralığınız bu ilan için uygun olmayabilir.</p>` : ''}
+                    ${!ageFit ? `<p class="text-red-500 text-[10px] font-bold italic underline">⚠️ Yaşınız uygun değil.</p>` : ''}
 
-                    <div class="flex gap-2 mt-2">
-                        ${userType === 'seeker' ? `
-                            <a href="tel:${j.phone}" class="flex-1 bg-indigo-50 text-indigo-700 text-center py-3 rounded-2xl text-sm font-bold border border-indigo-100">📞 Ara</a>
-                            <button onclick="openMessageModal(${j.id})" class="flex-1 bg-indigo-600 text-white py-3 rounded-2xl text-sm font-bold shadow-md">💬 Mesaj</button>
-                        ` : `
-                            <button onclick="showMessages(${j.id})" class="flex-1 bg-indigo-50 text-indigo-700 py-3 rounded-2xl text-sm font-bold border border-indigo-100">📥 Mesajları Gör</button>
-                        `}
+                    <div class="flex gap-2 mt-4">
+                        ${currentUser.user_type === 'seeker' ? `
+                            <a href="tel:${j.phone}" class="flex-1 bg-indigo-50 text-indigo-700 text-center py-4 rounded-2xl text-xs font-black">ARA</a>
+                            <button onclick="openMessageModal(${j.id})" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl text-xs font-black shadow-md">MESAJ GÖNDER</button>
+                        ` : (isOwner ? `
+                            <button onclick="showMessages(${j.id})" class="flex-1 bg-indigo-50 text-indigo-700 py-4 rounded-2xl text-xs font-black">GELENLER</button>
+                            <button onclick="openEditModal(${JSON.stringify(j).replace(/"/g, '&quot;')})" class="flex-1 bg-orange-500 text-white py-4 rounded-2xl text-xs font-black shadow-md">DÜZENLE</button>
+                        ` : `<button disabled class="flex-1 bg-gray-100 text-gray-400 py-4 rounded-2xl text-xs font-black">BAŞKASININ İLANI</button>`)}
                     </div>
                 </div>`;
             }).join('');
         }
 
-        // İlan Verme Modalını Aç/Kapat
-        function openPostModal() { document.getElementById('postModal').classList.remove('hidden'); }
-        function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
+        // İLAN EKLEME VE DÜZENLEME MANTIĞI
+        function openPostModal() {
+            document.getElementById('editingJobId').value = ''; // ID boşsa 'Ekleme' modudur
+            document.getElementById('modalTitle').innerText = "Yeni İlan";
+            clearForm();
+            document.getElementById('postModal').classList.remove('hidden');
+        }
 
-        // Yeni İlan Ekleme (Sunucuya Gönderme)
-        async function addJob() {
-            // Seçilen Yaş Aralıklarını Topla
+        function openEditModal(jobData) {
+            document.getElementById('editingJobId').value = jobData.id;
+            document.getElementById('modalTitle').innerText = "İlanı Düzenle";
+            document.getElementById('title').value = jobData.title;
+            document.getElementById('salary').value = jobData.salary;
+            document.getElementById('location').value = jobData.location;
+            document.getElementById('phone').value = jobData.phone;
+            document.getElementById('description').value = jobData.description;
+            // Yaş aralıklarını tikle
+            const ranges = jobData.age_range.split(', ');
+            document.querySelectorAll('input[name="ageRange"]').forEach(cb => {
+                cb.checked = ranges.includes(cb.value);
+            });
+            document.getElementById('postModal').classList.remove('hidden');
+        }
+
+        async function saveJob() {
+            const editingId = document.getElementById('editingJobId').value;
             const selectedAges = Array.from(document.querySelectorAll('input[name="ageRange"]:checked')).map(c => c.value);
-            if(selectedAges.length === 0) return alert("En az bir yaş grubu seçmelisiniz!");
-
+            
             const data = {
+                owner_email: currentUser.email,
                 title: document.getElementById('title').value,
                 salary: document.getElementById('salary').value,
                 location: document.getElementById('location').value,
@@ -189,62 +263,68 @@
                 description: document.getElementById('description').value,
                 age_range: selectedAges.join(', ')
             };
-            
-            await fetch('/api/jobs', {
-                method: 'POST',
+
+            const method = editingId ? 'PUT' : 'POST';
+            const url = editingId ? `/api/jobs/${editingId}` : '/api/jobs';
+
+            await fetch(url, {
+                method: method,
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
+
             closePostModal();
             loadJobs();
         }
 
-        // Mesajlaşma Penceresini Açma
+        function clearForm() {
+            document.getElementById('title').value = '';
+            document.getElementById('salary').value = '';
+            document.getElementById('location').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('description').value = '';
+            document.querySelectorAll('input[name="ageRange"]').forEach(cb => cb.checked = false);
+        }
+
+        function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
+
+        // MESAJ SİSTEMİ
         function openMessageModal(jobId) {
             document.getElementById('currentJobId').value = jobId;
             document.getElementById('messageModal').classList.remove('hidden');
         }
 
-        // Mesaj Gönderme İşlemi
         async function sendMessage() {
             const data = {
                 job_id: document.getElementById('currentJobId').value,
-                sender_age: userAge,
+                sender_email: currentUser.email,
+                sender_age: currentUser.age,
                 message_text: document.getElementById('msgText').value
             };
-            if(!data.message_text) return alert("Mesaj boş olamaz!");
-
             await fetch('/api/messages', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
-            
-            alert("Mesajınız işverene iletildi! Başarılar.");
+            alert("Mesaj iletildi!");
             document.getElementById('messageModal').classList.add('hidden');
             document.getElementById('msgText').value = '';
         }
 
-        // İşverenin Gelen Mesajları Görmesi
         async function showMessages(jobId) {
             const res = await fetch(`/api/messages/${jobId}`);
             const messages = await res.json();
             const list = document.getElementById('messageList');
-            
             document.getElementById('inboxModal').classList.remove('hidden');
             
-            if(messages.length === 0) {
-                list.innerHTML = `<p class="text-center text-gray-400 py-10">Henüz başvuru yok.</p>`;
-                return;
-            }
-
-            list.innerHTML = messages.map(m => `
-                <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+            list.innerHTML = messages.length === 0 ? '<p class="text-center text-gray-400">Henüz başvuru yok.</p>' : 
+            messages.map(m => `
+                <div class="bg-gray-50 p-5 rounded-2xl border border-indigo-100">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold">Aday Yaşı: ${m.sender_age}</span>
-                        <span class="text-[10px] text-gray-400 font-semibold">${new Date(m.timestamp).toLocaleDateString('tr-TR')}</span>
+                        <span class="text-[10px] bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-black">ADAY: ${m.sender_age} YAŞ</span>
+                        <span class="text-[10px] text-gray-400 font-bold">${m.sender_email}</span>
                     </div>
-                    <p class="text-sm text-gray-700 italic">"${m.message_text}"</p>
+                    <p class="text-sm text-gray-700 italic font-medium leading-relaxed">"${m.message_text}"</p>
                 </div>
             `).join('');
         }
