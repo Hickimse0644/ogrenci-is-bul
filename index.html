@@ -1,0 +1,59 @@
+/* =========================
+   2) BASİT FRONTEND (index.html)
+   =========================
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Öğrenci İş Bul</title>
+</head>
+<body>
+  <h2>İş İlanı Ekle</h2>
+  <input id="title" placeholder="İş (Garson)" /><br />
+  <input id="salary" placeholder="Maaş" /><br />
+  <input id="location" placeholder="Konum" /><br />
+  <input id="phone" placeholder="Telefon" /><br />
+  <input id="email" placeholder="E-posta" /><br />
+  <textarea id="description" placeholder="Açıklama"></textarea><br />
+  <button onclick="addJob()">Ekle</button>
+
+  <h2>İş İlanları</h2>
+  <div id="jobs"></div>
+
+<script>
+function addJob() {
+  fetch('http://localhost:3000/jobs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      title: title.value,
+      salary: salary.value,
+      location: location.value,
+      phone: phone.value,
+      email: email.value,
+      description: description.value
+    })
+  }).then(loadJobs);
+}
+
+function loadJobs() {
+  fetch('http://localhost:3000/jobs')
+    .then(res => res.json())
+    .then(data => {
+      jobs.innerHTML = data.map(j => `
+        <div style="border:1px solid #ccc; margin:5px; padding:5px">
+          <b>${j.title}</b> – ${j.salary}<br>
+          ${j.location}<br>
+          Tel: ${j.phone} | ${j.email}<br>
+          ${j.description}
+        </div>
+      `).join('');
+    });
+}
+
+loadJobs();
+</script>
+</body>
+</html>
+*/
