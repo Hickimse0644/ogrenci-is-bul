@@ -3,93 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Öğrenci İş Bul | Hızlı ve Kolay</title>
+    <title>İş Bul | Hızlı ve Güvenli</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f3f4f6; }
-        .job-card { transition: transform 0.2s; }
-        .job-card:hover { transform: translateY(-5px); }
-    </style>
 </head>
-<body>
-    <nav class="bg-blue-600 text-white p-4 shadow-lg">
+<body class="bg-gray-50">
+    <nav class="bg-indigo-700 text-white p-4 shadow-md sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-tight">🎓 ÖĞRENCİ İŞ</h1>
-            <button onclick="document.getElementById('addJobModal').classList.remove('hidden')" class="bg-white text-blue-600 px-4 py-2 rounded-full font-bold shadow-md">İlan Ver</button>
+            <h1 class="text-xl font-bold">🚀 İŞ BUL</h1>
+            <div id="userBadge" class="text-xs bg-indigo-800 px-3 py-1 rounded-full"></div>
         </div>
     </nav>
 
-    <div class="container mx-auto p-4 max-w-4xl">
-        <div id="welcomeScreen" class="bg-white p-6 rounded-2xl shadow-md mb-6 text-center">
-            <h2 class="text-xl font-bold mb-4">Hoş geldin! Seni nasıl tanımlayalım?</h2>
-            <div class="flex gap-4 justify-center">
-                <button onclick="setUserType('student')" class="bg-blue-100 text-blue-700 px-6 py-3 rounded-xl border-2 border-blue-500 font-semibold">Öğrenciyim</button>
-                <button onclick="setUserType('employer')" class="bg-green-100 text-green-700 px-6 py-3 rounded-xl border-2 border-green-500 font-semibold">İşverenim</button>
+    <div class="container mx-auto p-4 max-w-2xl">
+        <div id="loginModal" class="fixed inset-0 bg-indigo-900 z-[60] flex items-center justify-center p-6 text-white">
+            <div class="text-center max-w-sm">
+                <h2 class="text-3xl font-bold mb-6">Hoş Geldin!</h2>
+                <p class="mb-8 text-indigo-200">Sana en uygun ilanları göstermemiz için kendini tanıt.</p>
+                <div class="space-y-4">
+                    <button onclick="startApp('seeker')" class="w-full bg-white text-indigo-700 font-bold py-4 rounded-2xl shadow-xl">İş Arıyorum</button>
+                    <button onclick="startApp('employer')" class="w-full bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-xl border border-indigo-400">İş Verenim</button>
+                </div>
             </div>
         </div>
 
-        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <i class="fa-solid var(--fa-bolt) text-yellow-500"></i> Güncel İlanlar
-        </h2>
-        
-        <div id="jobList" class="grid gap-4">
-            <p class="text-gray-500 italic">İlanlar yükleniyor...</p>
+        <div id="ageModal" class="fixed inset-0 bg-black bg-opacity-80 z-[70] hidden flex items-center justify-center p-6">
+            <div class="bg-white p-6 rounded-3xl text-center w-full max-w-xs">
+                <h3 class="text-gray-800 font-bold mb-4 text-lg">Kaç yaşındasın?</h3>
+                <input id="userAge" type="number" class="w-full border-2 border-indigo-100 rounded-xl p-3 text-center text-2xl font-bold mb-4" placeholder="20">
+                <button onclick="saveAge()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Uygulamaya Gir</button>
+            </div>
         </div>
+
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-extrabold text-gray-800">İlanlar</h2>
+            <button id="postBtn" onclick="openPostModal()" class="bg-indigo-600 text-white px-5 py-2 rounded-full font-bold hidden">İlan Ver</button>
+        </div>
+
+        <div id="jobList" class="space-y-4 pb-20"></div>
     </div>
 
-    <div id="addJobModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold mb-4">Yeni İş İlanı Oluştur</h3>
+    <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl">
+            <h3 class="font-bold text-xl mb-4 text-gray-800">İş Detayları</h3>
             <div class="space-y-3">
-                <input id="title" type="text" placeholder="İş Başlığı (Örn: Garson)" class="w-full p-3 border rounded-lg">
+                <input id="title" type="text" placeholder="İş Başlığı (Örn: Paket Servis)" class="w-full p-3 bg-gray-50 rounded-xl outline-none border focus:border-indigo-500">
                 <div class="flex gap-2">
-                    <input id="salary" type="text" placeholder="Maaş (Günlük/Saatlik)" class="w-full p-3 border rounded-lg">
-                    <input id="location" type="text" placeholder="Şehir/İlçe" class="w-full p-3 border rounded-lg">
+                    <input id="salary" type="text" placeholder="Ücret" class="w-full p-3 bg-gray-50 rounded-xl border">
+                    <select id="ageRange" class="w-full p-3 bg-gray-50 rounded-xl border">
+                        <option value="Hepsi">Yaş Aralığı (Hepsi)</option>
+                        <option value="18-24">18-24 Yaş</option>
+                        <option value="25-35">25-35 Yaş</option>
+                        <option value="35+">35+ Yaş</option>
+                    </select>
                 </div>
-                <input id="phone" type="text" placeholder="Telefon No" class="w-full p-3 border rounded-lg">
-                <textarea id="description" placeholder="İş Detayları..." class="w-full p-3 border rounded-lg h-24"></textarea>
-                <div class="flex gap-2">
-                    <button onclick="addJob()" class="bg-blue-600 text-white w-full py-3 rounded-lg font-bold">Yayınla</button>
-                    <button onclick="document.getElementById('addJobModal').classList.add('hidden')" class="bg-gray-200 text-gray-700 w-full py-3 rounded-lg font-bold">İptal</button>
+                <input id="location" type="text" placeholder="Konum (Örn: Beşiktaş)" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <input id="phone" type="text" placeholder="Telefon" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <textarea id="description" placeholder="Açıklama..." class="w-full p-3 bg-gray-50 rounded-xl border h-20"></textarea>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="addJob()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Yayınla</button>
+                    <button onclick="closePostModal()" class="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">Kapat</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function setUserType(type) {
-            localStorage.setItem('userType', type);
-            document.getElementById('welcomeScreen').innerHTML = `<p class="text-blue-600 font-bold">Şu an <b>${type === 'student' ? 'Öğrenci' : 'İşveren'}</b> olarak görüntülüyorsun.</p>`;
+        let userType = '';
+        let userAge = 0;
+
+        function startApp(type) {
+            userType = type;
+            document.getElementById('loginModal').classList.add('hidden');
+            if(type === 'seeker') {
+                document.getElementById('ageModal').classList.remove('hidden');
+            } else {
+                document.getElementById('postBtn').classList.remove('hidden');
+                updateUI();
+            }
+        }
+
+        function saveAge() {
+            userAge = parseInt(document.getElementById('userAge').value);
+            if(!userAge) return alert("Lütfen yaşını gir!");
+            document.getElementById('ageModal').classList.add('hidden');
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('userBadge').innerText = userType === 'seeker' ? `İş Arıyor (${userAge} Yaş)` : 'İş Veren Modu';
+            loadJobs();
         }
 
         async function loadJobs() {
             const res = await fetch('/api/jobs');
             const jobs = await res.json();
-            const container = document.getElementById('jobList');
+            const list = document.getElementById('jobList');
             
-            container.innerHTML = jobs.map(j => `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 job-card">
+            list.innerHTML = jobs.map(j => {
+                // Basit Yaş Kontrolü
+                let ageWarning = "";
+                if(userType === 'seeker' && j.age_range !== 'Hepsi') {
+                    const [min, max] = j.age_range.split('-').map(Number);
+                    if(userAge < min || (max && userAge > max)) {
+                        ageWarning = `<span class="text-red-500 text-[10px] font-bold">⚠️ Yaşınız uygun olmayabilir</span>`;
+                    }
+                }
+
+                return `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
                     <div class="flex justify-between items-start">
                         <div>
-                            <span class="bg-blue-100 text-blue-600 text-xs font-bold px-2 py-1 rounded mb-2 inline-block">ACİL İŞ</span>
-                            <h3 class="text-xl font-bold text-gray-800">${j.title}</h3>
-                            <p class="text-gray-500 text-sm mt-1"><i class="fa-solid fa-location-dot"></i> ${j.location}</p>
+                            <h3 class="font-bold text-gray-800">${j.title}</h3>
+                            <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot"></i> ${j.location} • <span class="text-indigo-600 font-semibold">${j.age_range} Yaş</span></p>
                         </div>
-                        <div class="text-right">
-                            <p class="text-green-600 font-bold text-lg">${j.salary}</p>
-                        </div>
+                        <span class="text-green-600 font-bold">${j.salary}</span>
                     </div>
-                    <p class="text-gray-600 mt-3 text-sm line-clamp-2">${j.description}</p>
-                    <div class="mt-4 pt-4 border-t flex justify-between items-center">
-                        <a href="tel:${j.phone}" class="text-blue-600 font-bold flex items-center gap-2">
-                            <i class="fa-solid fa-phone"></i> Hemen Ara
-                        </a>
-                        <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold">Detaylar</button>
+                    <p class="text-sm text-gray-600 line-clamp-2">${j.description}</p>
+                    ${ageWarning}
+                    <div class="flex gap-2 mt-2">
+                        <a href="tel:${j.phone}" class="flex-1 bg-indigo-50 text-indigo-700 text-center py-2 rounded-xl text-sm font-bold border border-indigo-100">📞 Ara</a>
+                        <button onclick="alert('Mesajlaşma özelliği yakında!')" class="flex-1 bg-gray-50 text-gray-700 py-2 rounded-xl text-sm font-bold border border-gray-200">💬 Mesaj</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
+
+        function openPostModal() { document.getElementById('postModal').classList.remove('hidden'); }
+        function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
 
         async function addJob() {
             const data = {
@@ -97,20 +138,17 @@
                 salary: document.getElementById('salary').value,
                 location: document.getElementById('location').value,
                 phone: document.getElementById('phone').value,
-                description: document.getElementById('description').value
+                description: document.getElementById('description').value,
+                age_range: document.getElementById('ageRange').value
             };
-
             await fetch('/api/jobs', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
-
-            document.getElementById('addJobModal').classList.add('hidden');
+            closePostModal();
             loadJobs();
         }
-
-        loadJobs();
     </script>
 </body>
 </html>

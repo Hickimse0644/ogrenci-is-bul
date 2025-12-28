@@ -1,74 +1,60 @@
-// BASIT MVP – Öğrenci & İşveren İş Bulma Web Uygulaması
-// Backend: Node.js + Express + SQLite
-// Frontend: HTML (ayrı dosya olarak düşün)
-
-/* =========================
-   1) KURULUM
-   =========================
-   1. Bilgisayarına Node.js kur
-   2. Proje klasörü oluştur
-   3. Terminalde:
-      npm init -y
-      npm install express sqlite3 cors body-parser
-   4. Bu dosyayı server.js olarak kaydet
-   5. node server.js ile çalıştır
-*/
-const path = require("path");
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
-const bodyParser = require("body-parser");
 const cors = require("cors");
+const bodyParser = require("body-parser");
+const path = require("path");
 
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
+const db = new sqlite3.Database("./database.db");
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
 
-// =========================
-// VERİTABANI
-// =========================
-const db = new sqlite3.Database("jobs.db");
-
-db.run(`CREATE TABLE IF NOT EXISTS jobs (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT,
-  salary TEXT,
-  location TEXT,
-  phone TEXT,
-  email TEXT,
-  description TEXT
-)`);
-
-// =========================
-// API ENDPOINTS
-// =========================
-
-// İş ilanı ekle
-app.post("/jobs", (req, res) => {
-  const { title, salary, location, phone, email, description } = req.body;
-  db.run(
-    "INSERT INTO jobs (title, salary, location, phone, email, description) VALUES (?,?,?,?,?,?)",
-    [title, salary, location, phone, email, description],
-    () => res.json({ status: "ok" })
-  );
+// Veritabanına 'age_range' sütununu ekledik
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    salary TEXT,
+    location TEXT,
+    phone TEXT,
+    description TEXT,
+    age_range TEXT
+  )`);
 });
 
-// İş ilanlarını getir
-app.get("/jobs", (req, res) => {
+// Güvenlik: Basit bir koruma katmanı (Sadece JSON bekler)
+app.use((req, res, next) => {
+  if (req.method === 'POST' && !req.is('json')) {
+    return res.status(400).send('Sadece JSON kabul edilir.');
+  }
+  next();
+});
+
+app.get("/api/jobs", (req, res) => {
   db.all("SELECT * FROM jobs ORDER BY id DESC", (err, rows) => {
     res.json(rows);
   });
 });
 
-// =========================
-// SERVER
-// =========================
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-app.listen(3000, () => {
-  console.log("Server çalışıyor: http://localhost:3000");
+app.post("/api/jobs", (req, res) => {
+  const { title, salary, location, phone, description, age_range } = req.body;
+  // Güvenlik: Basit boş veri kontrolü
+  if(!title || !phone) return res.status(400).json({error: "Eksik alan!"});
+
+  db.run(
+    "INSERT INTO jobs (title, salary, location, phone, description, age_range) VALUES (?,?,?,?,?,?)",
+    [title, salary, location, phone, description, age_range],
+    function(err) {
+      res.json({ id: this.lastID });
+    }
+  );
 });
 
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server aktif: ${PORT}`));
