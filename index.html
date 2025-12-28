@@ -10,8 +10,8 @@
 <body class="bg-gray-50">
     <nav class="bg-indigo-700 text-white p-4 shadow-md sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">🚀 İŞ BUL</h1>
-            <div id="userBadge" class="text-xs bg-indigo-800 px-3 py-1 rounded-full"></div>
+            <h1 class="text-xl font-bold italic">🚀 İŞ BUL</h1>
+            <div id="userBadge" class="text-xs bg-indigo-800 px-3 py-1 rounded-full font-semibold"></div>
         </div>
     </nav>
 
@@ -19,7 +19,6 @@
         <div id="loginModal" class="fixed inset-0 bg-indigo-900 z-[60] flex items-center justify-center p-6 text-white">
             <div class="text-center max-w-sm">
                 <h2 class="text-3xl font-bold mb-6">Hoş Geldin!</h2>
-                <p class="mb-8 text-indigo-200">Sana en uygun ilanları göstermemiz için kendini tanıt.</p>
                 <div class="space-y-4">
                     <button onclick="startApp('seeker')" class="w-full bg-white text-indigo-700 font-bold py-4 rounded-2xl shadow-xl">İş Arıyorum</button>
                     <button onclick="startApp('employer')" class="w-full bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-xl border border-indigo-400">İş Verenim</button>
@@ -29,42 +28,70 @@
 
         <div id="ageModal" class="fixed inset-0 bg-black bg-opacity-80 z-[70] hidden flex items-center justify-center p-6">
             <div class="bg-white p-6 rounded-3xl text-center w-full max-w-xs">
-                <h3 class="text-gray-800 font-bold mb-4 text-lg">Kaç yaşındasın?</h3>
-                <input id="userAge" type="number" class="w-full border-2 border-indigo-100 rounded-xl p-3 text-center text-2xl font-bold mb-4" placeholder="20">
-                <button onclick="saveAge()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Uygulamaya Gir</button>
+                <h3 class="text-gray-800 font-bold mb-4 text-lg text-indigo-600">Kaç yaşındasın?</h3>
+                <input id="userAge" type="number" class="w-full border-2 border-indigo-100 rounded-xl p-3 text-center text-2xl font-bold mb-4 focus:border-indigo-500 outline-none" placeholder="20">
+                <button onclick="saveAge()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition">Uygulamaya Gir</button>
             </div>
         </div>
 
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-extrabold text-gray-800">İlanlar</h2>
-            <button id="postBtn" onclick="openPostModal()" class="bg-indigo-600 text-white px-5 py-2 rounded-full font-bold hidden">İlan Ver</button>
+            <h2 class="text-2xl font-extrabold text-gray-800 tracking-tight">İlanlar</h2>
+            <button id="postBtn" onclick="openPostModal()" class="bg-indigo-600 text-white px-5 py-2 rounded-full font-bold hidden shadow-lg hover:scale-105 transition">İlan Ver</button>
         </div>
 
-        <div id="jobList" class="space-y-4 pb-20"></div>
+        <div id="jobList" class="space-y-4 pb-20 text-indigo-900"></div>
     </div>
 
     <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 z-[80] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl">
-            <h3 class="font-bold text-xl mb-4 text-gray-800">İş Detayları</h3>
-            <div class="space-y-3">
-                <input id="title" type="text" placeholder="İş Başlığı (Örn: Paket Servis)" class="w-full p-3 bg-gray-50 rounded-xl outline-none border focus:border-indigo-500">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 class="font-bold text-xl mb-4 text-indigo-700 border-b pb-2">İş Detayları</h3>
+            <div class="space-y-4">
+                <input id="title" type="text" placeholder="İş Başlığı (Örn: Paket Servis)" class="w-full p-3 bg-gray-50 rounded-xl border focus:border-indigo-500 outline-none">
                 <div class="flex gap-2">
-                    <input id="salary" type="text" placeholder="Ücret" class="w-full p-3 bg-gray-50 rounded-xl border">
-                    <select id="ageRange" class="w-full p-3 bg-gray-50 rounded-xl border">
-                        <option value="Hepsi">Yaş Aralığı (Hepsi)</option>
-                        <option value="18-24">18-24 Yaş</option>
-                        <option value="25-35">25-35 Yaş</option>
-                        <option value="35+">35+ Yaş</option>
-                    </select>
+                    <input id="salary" type="text" placeholder="Ücret" class="w-full p-3 bg-gray-50 rounded-xl border focus:border-indigo-500 outline-none">
+                    <input id="location" type="text" placeholder="Konum" class="w-full p-3 bg-gray-50 rounded-xl border focus:border-indigo-500 outline-none">
                 </div>
-                <input id="location" type="text" placeholder="Konum (Örn: Beşiktaş)" class="w-full p-3 bg-gray-50 rounded-xl border">
-                <input id="phone" type="text" placeholder="Telefon" class="w-full p-3 bg-gray-50 rounded-xl border">
-                <textarea id="description" placeholder="Açıklama..." class="w-full p-3 bg-gray-50 rounded-xl border h-20"></textarea>
+                
+                <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                    <p class="text-xs font-bold text-indigo-600 mb-2">Uygun Yaş Aralıkları:</p>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <label class="flex items-center gap-2"><input type="checkbox" name="ageRange" value="18-24"> 18-24 Yaş</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" name="ageRange" value="25-35"> 25-35 Yaş</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" name="ageRange" value="35+"> 35+ Yaş</label>
+                    </div>
+                </div>
+
+                <input id="phone" type="text" placeholder="İletişim Numarası" class="w-full p-3 bg-gray-50 rounded-xl border focus:border-indigo-500 outline-none">
+                <textarea id="description" placeholder="Aranan şartlar ve iş detayları..." class="w-full p-3 bg-gray-50 rounded-xl border h-24 focus:border-indigo-500 outline-none"></textarea>
+                
                 <div class="flex gap-2 pt-2">
-                    <button onclick="addJob()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Yayınla</button>
+                    <button onclick="addJob()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg">Yayınla</button>
                     <button onclick="closePostModal()" class="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">Kapat</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 z-[90] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl">
+            <h3 class="font-bold text-lg mb-4 text-indigo-700">Mesaj Gönder</h3>
+            <textarea id="msgText" placeholder="Merhaba, iş ile ilgileniyorum..." class="w-full p-3 bg-gray-50 rounded-xl border h-32 focus:border-indigo-500 outline-none mb-4"></textarea>
+            <input type="hidden" id="currentJobId">
+            <div class="flex gap-2">
+                <button onclick="sendMessage()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg">Gönder</button>
+                <button onclick="document.getElementById('messageModal').classList.add('hidden')" class="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-bold">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="inboxModal" class="fixed inset-0 bg-black bg-opacity-50 z-[90] hidden flex items-center justify-center p-4 text-indigo-900">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-indigo-700">Gelen Başvurular</h3>
+                <button onclick="document.getElementById('inboxModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="messageList" class="space-y-3">
+                </div>
         </div>
     </div>
 
@@ -72,6 +99,7 @@
         let userType = '';
         let userAge = 0;
 
+        // Uygulamayı Başlatma (İş Arayan / İşveren Seçimi)
         function startApp(type) {
             userType = type;
             document.getElementById('loginModal').classList.add('hidden');
@@ -83,6 +111,7 @@
             }
         }
 
+        // Kullanıcı Yaşını Kaydetme
         function saveAge() {
             userAge = parseInt(document.getElementById('userAge').value);
             if(!userAge) return alert("Lütfen yaşını gir!");
@@ -90,57 +119,77 @@
             updateUI();
         }
 
+        // Arayüzü Güncelleme (Badge Ayarı)
         function updateUI() {
-            document.getElementById('userBadge').innerText = userType === 'seeker' ? `İş Arıyor (${userAge} Yaş)` : 'İş Veren Modu';
+            document.getElementById('userBadge').innerText = userType === 'seeker' ? `👤 Arayan (${userAge} Yaş)` : '💼 İş Veren';
             loadJobs();
         }
 
+        // İlanları Sunucudan Çekme ve Listeleme
         async function loadJobs() {
             const res = await fetch('/api/jobs');
             const jobs = await res.json();
             const list = document.getElementById('jobList');
             
             list.innerHTML = jobs.map(j => {
-                // Basit Yaş Kontrolü
-                let ageWarning = "";
-                if(userType === 'seeker' && j.age_range !== 'Hepsi') {
-                    const [min, max] = j.age_range.split('-').map(Number);
-                    if(userAge < min || (max && userAge > max)) {
-                        ageWarning = `<span class="text-red-500 text-[10px] font-bold">⚠️ Yaşınız uygun olmayabilir</span>`;
-                    }
+                // Yaş Uygunluk Kontrolü
+                let isAgeFit = true;
+                if(userType === 'seeker') {
+                    const ranges = j.age_range.split(', ');
+                    isAgeFit = ranges.some(range => {
+                        if(range === '35+' && userAge >= 35) return true;
+                        const [min, max] = range.split('-').map(Number);
+                        return userAge >= min && userAge <= max;
+                    });
                 }
 
                 return `
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex flex-col gap-3 transition hover:shadow-md">
                     <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-bold text-gray-800">${j.title}</h3>
-                            <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot"></i> ${j.location} • <span class="text-indigo-600 font-semibold">${j.age_range} Yaş</span></p>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-lg text-indigo-900 leading-tight">${j.title}</h3>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <span class="text-[10px] bg-indigo-50 text-indigo-600 font-bold px-2 py-0.5 rounded-full"><i class="fa-solid fa-location-dot"></i> ${j.location}</span>
+                                <span class="text-[10px] bg-orange-50 text-orange-600 font-bold px-2 py-0.5 rounded-full"><i class="fa-solid fa-user-tag"></i> ${j.age_range}</span>
+                            </div>
                         </div>
-                        <span class="text-green-600 font-bold">${j.salary}</span>
+                        <span class="text-green-600 font-extrabold text-lg">${j.salary}</span>
                     </div>
-                    <p class="text-sm text-gray-600 line-clamp-2">${j.description}</p>
-                    ${ageWarning}
+                    <p class="text-sm text-gray-600">${j.description}</p>
+                    
+                    ${!isAgeFit ? `<p class="text-red-500 text-[10px] font-bold italic">⚠️ Yaş aralığınız bu ilan için uygun olmayabilir.</p>` : ''}
+
                     <div class="flex gap-2 mt-2">
-                        <a href="tel:${j.phone}" class="flex-1 bg-indigo-50 text-indigo-700 text-center py-2 rounded-xl text-sm font-bold border border-indigo-100">📞 Ara</a>
-                        <button onclick="alert('Mesajlaşma özelliği yakında!')" class="flex-1 bg-gray-50 text-gray-700 py-2 rounded-xl text-sm font-bold border border-gray-200">💬 Mesaj</button>
+                        ${userType === 'seeker' ? `
+                            <a href="tel:${j.phone}" class="flex-1 bg-indigo-50 text-indigo-700 text-center py-3 rounded-2xl text-sm font-bold border border-indigo-100">📞 Ara</a>
+                            <button onclick="openMessageModal(${j.id})" class="flex-1 bg-indigo-600 text-white py-3 rounded-2xl text-sm font-bold shadow-md">💬 Mesaj</button>
+                        ` : `
+                            <button onclick="showMessages(${j.id})" class="flex-1 bg-indigo-50 text-indigo-700 py-3 rounded-2xl text-sm font-bold border border-indigo-100">📥 Mesajları Gör</button>
+                        `}
                     </div>
                 </div>`;
             }).join('');
         }
 
+        // İlan Verme Modalını Aç/Kapat
         function openPostModal() { document.getElementById('postModal').classList.remove('hidden'); }
         function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
 
+        // Yeni İlan Ekleme (Sunucuya Gönderme)
         async function addJob() {
+            // Seçilen Yaş Aralıklarını Topla
+            const selectedAges = Array.from(document.querySelectorAll('input[name="ageRange"]:checked')).map(c => c.value);
+            if(selectedAges.length === 0) return alert("En az bir yaş grubu seçmelisiniz!");
+
             const data = {
                 title: document.getElementById('title').value,
                 salary: document.getElementById('salary').value,
                 location: document.getElementById('location').value,
                 phone: document.getElementById('phone').value,
                 description: document.getElementById('description').value,
-                age_range: document.getElementById('ageRange').value
+                age_range: selectedAges.join(', ')
             };
+            
             await fetch('/api/jobs', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -148,6 +197,56 @@
             });
             closePostModal();
             loadJobs();
+        }
+
+        // Mesajlaşma Penceresini Açma
+        function openMessageModal(jobId) {
+            document.getElementById('currentJobId').value = jobId;
+            document.getElementById('messageModal').classList.remove('hidden');
+        }
+
+        // Mesaj Gönderme İşlemi
+        async function sendMessage() {
+            const data = {
+                job_id: document.getElementById('currentJobId').value,
+                sender_age: userAge,
+                message_text: document.getElementById('msgText').value
+            };
+            if(!data.message_text) return alert("Mesaj boş olamaz!");
+
+            await fetch('/api/messages', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            alert("Mesajınız işverene iletildi! Başarılar.");
+            document.getElementById('messageModal').classList.add('hidden');
+            document.getElementById('msgText').value = '';
+        }
+
+        // İşverenin Gelen Mesajları Görmesi
+        async function showMessages(jobId) {
+            const res = await fetch(`/api/messages/${jobId}`);
+            const messages = await res.json();
+            const list = document.getElementById('messageList');
+            
+            document.getElementById('inboxModal').classList.remove('hidden');
+            
+            if(messages.length === 0) {
+                list.innerHTML = `<p class="text-center text-gray-400 py-10">Henüz başvuru yok.</p>`;
+                return;
+            }
+
+            list.innerHTML = messages.map(m => `
+                <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold">Aday Yaşı: ${m.sender_age}</span>
+                        <span class="text-[10px] text-gray-400 font-semibold">${new Date(m.timestamp).toLocaleDateString('tr-TR')}</span>
+                    </div>
+                    <p class="text-sm text-gray-700 italic">"${m.message_text}"</p>
+                </div>
+            `).join('');
         }
     </script>
 </body>
