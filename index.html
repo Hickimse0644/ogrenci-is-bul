@@ -8,150 +8,128 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .discord-card { 
-            display: none; position: absolute; right: 20px; top: 80px; 
-            width: 330px; background: #232428; border-radius: 16px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 1000; overflow: hidden;
+            display: none; position: absolute; right: 20px; top: 70px; 
+            width: 300px; background: #232428; border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000; overflow: hidden;
         }
-        .discord-card.active { display: block; animation: popUp 0.2s ease-out; }
-        @keyframes popUp { from { opacity:0; scale: 0.95; } to { opacity:1; scale: 1; } }
-        .nav-profile-btn {
-            display: flex; align-items: center; gap: 15px; /* Fotoğraf ve yazı arası açıldı */
-            background: rgba(255,255,255,0.1); padding: 5px 15px;
-            border-radius: 50px; border: 1px solid rgba(255,255,255,0.2);
-            transition: all 0.3s;
-        }
-        .nav-profile-btn:hover { background: rgba(255,255,255,0.2); }
+        .discord-card.active { display: block; animation: slideIn 0.2s ease; }
+        @keyframes slideIn { from { opacity:0; transform: translateY(-10px); } to { opacity:1; transform: translateY(0); } }
         .error-label { color: #f23f43; font-size: 12px; font-weight: bold; margin-top: 5px; display: none; }
     </style>
 </head>
-<body class="bg-slate-100">
+<body class="bg-slate-200">
 
     <nav class="bg-indigo-700 p-4 text-white shadow-2xl sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-briefcase text-2xl"></i>
-                <h1 class="text-xl font-black italic">İŞBUL.PRO</h1>
+                <h1 class="text-xl font-black italic tracking-widest">İŞBUL.PRO</h1>
             </div>
-            <div id="userSection" class="hidden">
-                <button onclick="toggleDiscordProfile()" class="nav-profile-btn">
+            <div id="userSection" class="hidden flex items-center gap-4">
+                <button onclick="toggleDiscordProfile()" class="flex items-center gap-2 hover:bg-indigo-600 p-2 rounded-lg transition">
+                    <img id="navAvatar" class="w-8 h-8 rounded-full border-2 border-white">
                     <span id="navUser" class="font-bold"></span>
-                    <img id="navAvatar" class="w-10 h-10 rounded-full border-2 border-indigo-400 object-cover">
                 </button>
             </div>
         </div>
     </nav>
 
-    <div id="discordProfile" class="discord-card text-white">
+    <div id="discordProfile" class="discord-card text-white font-sans">
         <div class="h-20 bg-indigo-500"></div>
-        <div class="px-5 pb-5 relative">
-            <img id="profileAvatar" class="w-24 h-24 rounded-full border-[8px] border-[#232428] absolute -top-12 left-4 bg-[#232428] object-cover">
-            
-            <div id="profileViewMode" class="mt-14">
-                <h2 id="profileName" class="text-2xl font-bold">Kullanıcı</h2>
-                <div class="bg-[#111214] rounded-xl p-4 mt-4 space-y-3">
-                    <div><p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Hakkımda</p><p id="profileType" class="text-sm">--</p></div>
-                    <div><p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Yaş</p><p id="profileAge" class="text-sm">--</p></div>
+        <div class="px-4 pb-4 relative">
+            <img id="profileAvatar" class="w-20 h-20 rounded-full border-[6px] border-[#232428] absolute -top-10 left-4 bg-[#232428]">
+            <div class="mt-12">
+                <h2 id="profileName" class="text-xl font-bold">Kullanıcı Adı</h2>
+                <p class="text-gray-400 text-xs mb-4">Üye #0001</p>
+                
+                <div class="bg-[#111214] rounded-lg p-3 space-y-3">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase">Hakkımda</p>
+                        <p id="profileType" class="text-sm">İş Arayan</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase">Yaş</p>
+                        <p id="profileAge" class="text-sm">--</p>
+                    </div>
                 </div>
-                <div class="flex gap-2 mt-6">
-                    <button onclick="switchMode('edit')" class="flex-1 bg-indigo-600 hover:bg-indigo-500 py-2.5 rounded-lg font-bold text-sm transition">DÜZENLE</button>
-                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2.5 rounded-lg transition"><i class="fa-solid fa-power-off"></i></button>
-                </div>
-            </div>
-
-            <div id="profileEditMode" class="mt-14 hidden space-y-4">
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase">Yeni Kullanıcı Adı</label>
-                    <input type="text" id="editUsername" class="w-full bg-[#111214] p-3 rounded-lg text-sm border border-gray-700 outline-none focus:border-indigo-500">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase">Yaş</label>
-                    <input type="number" id="editAge" class="w-full bg-[#111214] p-3 rounded-lg text-sm border border-gray-700 outline-none focus:border-indigo-500">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase">Sadece Resim (.png, .jpg)</label>
-                    <input type="file" id="editFile" accept="image/*" class="text-xs bg-[#111214] w-full p-2 rounded-lg">
-                </div>
-                <div class="flex gap-2 pt-2">
-                    <button onclick="updateProfile()" class="flex-1 bg-green-600 hover:bg-green-500 py-2.5 rounded-lg font-bold text-sm">KAYDET</button>
-                    <button onclick="switchMode('view')" class="flex-1 bg-gray-700 hover:bg-gray-600 py-2.5 rounded-lg font-bold text-sm">İPTAL</button>
-                </div>
+                
+                <button onclick="logout()" class="w-full mt-4 bg-red-500 hover:bg-red-600 py-2 rounded font-bold transition">Çıkış Yap</button>
             </div>
         </div>
     </div>
 
     <div class="container mx-auto p-6 max-w-4xl">
         <div id="authScreen" class="fixed inset-0 bg-indigo-950 flex items-center justify-center z-[2000] p-4">
-            <div class="bg-white w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl">
-                <h2 id="authHeading" class="text-3xl font-black text-indigo-700 mb-8 text-center tracking-tighter uppercase">Hoş Geldiniz</h2>
-                <div class="space-y-5">
-                    <input id="inUsername" type="text" placeholder="Kullanıcı Adı" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 ring-indigo-100 transition">
-                    <div id="regOnly" class="hidden space-y-5">
-                        <input id="inAge" type="number" placeholder="Yaşınız" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 ring-indigo-100 transition">
-                        <select id="inType" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none">
+            <div class="bg-white w-full max-w-md p-8 rounded-[2rem] shadow-2xl">
+                <h2 id="authHeading" class="text-3xl font-black text-indigo-700 mb-6 text-center">Giriş Yap</h2>
+                <div class="space-y-4">
+                    <input id="inUsername" type="text" placeholder="Kullanıcı Adı" class="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 ring-indigo-500 outline-none">
+                    <div id="regOnly" class="hidden space-y-4">
+                        <input id="inAge" type="number" placeholder="Yaşınız (18+)" class="w-full p-4 bg-gray-100 rounded-xl outline-none">
+                        <select id="inType" class="w-full p-4 bg-gray-100 rounded-xl outline-none">
                             <option value="seeker">İş Arıyorum</option>
                             <option value="employer">İş Verenim</option>
                         </select>
                     </div>
-                    <input id="inPass" type="password" placeholder="Şifre" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 ring-indigo-100 transition">
+                    <div class="relative">
+                        <input id="inPass" type="password" placeholder="Şifre" class="w-full p-4 bg-gray-100 rounded-xl outline-none">
+                        <button onclick="togglePass()" class="absolute right-4 top-4 text-gray-400"><i class="fa-solid fa-eye" id="passIcon"></i></button>
+                    </div>
+                    <div id="regConfirm" class="hidden">
+                        <input id="inPass2" type="password" placeholder="Şifre Tekrar" class="w-full p-4 bg-gray-100 rounded-xl outline-none">
+                    </div>
                     <p id="authError" class="error-label text-center"></p>
-                    <button onclick="handleAuth()" class="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-xl hover:bg-indigo-700 transition">DEVAM ET</button>
-                    <button onclick="toggleAuthMode()" id="toggleBtn" class="w-full text-indigo-600 font-bold text-sm mt-2">Henüz hesabın yok mu? Kayıt Ol</button>
+                    <button onclick="handleAuth()" id="authBtn" class="w-full bg-indigo-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-indigo-500 transition">DEVAM ET</button>
+                    <p class="text-center text-sm text-gray-500">
+                        <span id="toggleText">Hesabın yok mu?</span> 
+                        <button onclick="toggleAuthMode()" id="toggleBtn" class="text-indigo-600 font-bold">Kayıt Ol</button>
+                    </p>
                 </div>
             </div>
         </div>
 
-        <div class="flex justify-between items-center mb-10">
-            <div>
-                <h2 class="text-4xl font-black text-slate-800">İş İlanları</h2>
-                <p class="text-gray-500 font-medium">Sana en uygun işi hemen bul.</p>
-            </div>
-            <button id="jobCreateBtn" onclick="openJobModal()" class="hidden bg-indigo-600 text-white px-8 py-4 rounded-[2rem] font-black shadow-xl hover:scale-105 transition">YENİ İLAN YAYINLA</button>
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-black text-slate-800 tracking-tight">İş İlanları</h2>
+            <button id="jobCreateBtn" onclick="openJobModal()" class="hidden bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black shadow-xl hover:scale-105 transition">YENİ İLAN YAYINLA</button>
         </div>
 
-        <div id="jobContainer" class="grid grid-cols-1 md:grid-cols-2 gap-8 pb-24">
+        <div id="jobContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
             </div>
     </div>
 
     <div id="jobModal" class="fixed inset-0 bg-black/70 hidden z-[3000] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-xl rounded-[3rem] p-10 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-2xl font-black mb-8 text-indigo-700 uppercase italic">İlan Oluştur</h3>
+        <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-black mb-6 text-indigo-700">İlan Detaylarını Girin</h3>
             <div class="space-y-4">
-                <input id="jTitle" placeholder="İş Başlığı (Örn: Paket Servis Elemanı)" class="w-full p-4 bg-gray-50 rounded-2xl outline-none border">
+                <input id="jTitle" placeholder="İş Başlığı (Örn: Garson Arıyoruz)" class="w-full p-4 border rounded-xl outline-none">
                 <div class="grid grid-cols-2 gap-4">
-                    <input id="jSalary" placeholder="Maaş/Ücret" class="w-full p-4 bg-gray-50 rounded-2xl border">
-                    <input id="jLoc" placeholder="Konum (İl/İlçe)" class="w-full p-4 bg-gray-50 rounded-2xl border">
+                    <input id="jSalary" placeholder="Ücret/Maaş" class="w-full p-4 border rounded-xl">
+                    <input id="jLoc" placeholder="Şehir/İlçe" class="w-full p-4 border rounded-xl">
                 </div>
-                <input id="jPhone" placeholder="İletişim Numarası" class="w-full p-4 bg-gray-50 rounded-2xl border">
-                <div class="p-6 bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-2xl text-center">
-                    <label class="block text-indigo-600 font-black mb-2 text-xs uppercase">İlan Görseli (Opsiyonel)</label>
+                <input id="jPhone" placeholder="İletişim Numarası" class="w-full p-4 border rounded-xl">
+                
+                <div class="p-4 bg-gray-50 rounded-xl border-2 border-dashed border-indigo-200">
+                    <p class="text-xs font-bold text-indigo-600 mb-2 uppercase">İş Görseli Seç</p>
                     <input type="file" id="jFile" accept="image/*" class="text-xs">
                 </div>
-                <textarea id="jDesc" placeholder="İş detaylarını yazın..." class="w-full p-4 bg-gray-50 rounded-2xl h-32 outline-none border"></textarea>
-                <div class="flex gap-4 pt-4">
-                    <button onclick="saveJob()" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg">YAYINLA</button>
-                    <button onclick="closeJobModal()" class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl font-black">İPTAL</button>
+
+                <textarea id="jDesc" placeholder="İşin detayları ve beklentileriniz..." class="w-full p-4 border rounded-xl h-32 outline-none"></textarea>
+                
+                <div class="flex gap-4">
+                    <button onclick="saveJob()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black shadow-lg">YAYINLA</button>
+                    <button onclick="closeJobModal()" class="w-full bg-gray-100 py-4 rounded-xl font-bold">İPTAL</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="inboxModal" class="fixed inset-0 bg-black/60 hidden z-[5000] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 max-h-[80vh] overflow-y-auto">
-            <h3 class="text-xl font-black mb-6 text-indigo-700 flex items-center gap-2">
-                <i class="fa-solid fa-envelope-open-text"></i> GELEN BAŞVURULAR
-            </h3>
-            <div id="messageList" class="space-y-4"></div>
-            <button onclick="document.getElementById('inboxModal').classList.add('hidden')" class="w-full mt-8 bg-gray-100 py-4 rounded-2xl font-black">KAPAT</button>
-        </div>
-    </div>
-
-    <div id="applyModal" class="fixed inset-0 bg-black/60 hidden z-[4000] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl">
-            <h3 class="text-xl font-black mb-6">Hızlı Başvuru Yap</h3>
-            <textarea id="mText" class="w-full p-5 bg-gray-50 border border-gray-100 rounded-3xl h-44 outline-none mb-6" placeholder="Kendinizden ve tecrübelerinizden bahsedin..."></textarea>
-            <div class="flex gap-4">
-                <button onclick="sendApp()" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black">GÖNDER</button>
-                <button onclick="document.getElementById('applyModal').classList.add('hidden')" class="flex-1 bg-gray-100 py-4 rounded-2xl font-black">İPTAL</button>
+    <div id="msgModal" class="fixed inset-0 bg-black/60 hidden z-[4000] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2rem] p-8 shadow-2xl">
+            <h3 class="text-xl font-black mb-4">Hızlı Başvuru</h3>
+            <textarea id="mText" class="w-full p-4 bg-gray-50 border rounded-2xl h-40 outline-none mb-4" placeholder="Kendinizden bahsedin..."></textarea>
+            <div class="flex gap-3">
+                <button onclick="sendApp()" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold">GÖNDER</button>
+                <button onclick="document.getElementById('msgModal').classList.add('hidden')" class="flex-1 bg-gray-100 py-4 rounded-xl font-bold">KAPAT</button>
             </div>
         </div>
     </div>
@@ -162,15 +140,31 @@
         let activeJobId = null;
 
         window.onload = () => {
-            const saved = localStorage.getItem('user_pro_data');
-            if(saved) { currentUser = JSON.parse(saved); initDashboard(); }
+            const saved = localStorage.getItem('userData');
+            if(saved) {
+                currentUser = JSON.parse(saved);
+                initDashboard();
+            }
         }
 
         function toggleAuthMode() {
             isRegisterMode = !isRegisterMode;
             document.getElementById('regOnly').classList.toggle('hidden');
-            document.getElementById('authHeading').innerText = isRegisterMode ? "Hesap Oluştur" : "Hoş Geldiniz";
-            document.getElementById('toggleBtn').innerText = isRegisterMode ? "Zaten hesabın var mı? Giriş Yap" : "Henüz hesabın yok mu? Kayıt Ol";
+            document.getElementById('regConfirm').classList.toggle('hidden');
+            document.getElementById('authHeading').innerText = isRegisterMode ? "Hesap Oluştur" : "Giriş Yap";
+            document.getElementById('toggleText').innerText = isRegisterMode ? "Zaten hesabın var mı?" : "Hesabın yok mu?";
+            document.getElementById('toggleBtn').innerText = isRegisterMode ? "Giriş Yap" : "Kayıt Ol";
+        }
+
+        function togglePass() {
+            const p = document.getElementById('inPass');
+            const icon = document.getElementById('passIcon');
+            p.type = p.type === 'password' ? 'text' : 'password';
+            icon.classList.toggle('fa-eye-slash');
+        }
+
+        function toggleDiscordProfile() {
+            document.getElementById('discordProfile').classList.toggle('active');
         }
 
         async function handleAuth() {
@@ -179,24 +173,43 @@
             const err = document.getElementById('authError');
             err.style.display = 'none';
 
-            const url = isRegisterMode ? '/api/register' : '/api/login';
-            const body = isRegisterMode ? {
-                username: user, password: pass,
-                age: parseInt(document.getElementById('inAge').value),
-                user_type: document.getElementById('inType').value
-            } : { username: user, password: pass };
+            if(isRegisterMode) {
+                const age = document.getElementById('inAge').value;
+                const pass2 = document.getElementById('inPass2').value;
+                const type = document.getElementById('inType').value;
 
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(body)
-            });
-            const data = await res.json();
-            if(data.error) { err.innerText = data.error; err.style.display = 'block'; return; }
-            
-            currentUser = isRegisterMode ? { ...body, avatar: data.avatar } : data;
-            localStorage.setItem('user_pro_data', JSON.stringify(currentUser));
+                if(user.length < 3) return showError("Kullanıcı adı çok kısa!");
+                if(pass.length < 8) return showError("Şifre en az 8 karakter!");
+                if(pass !== pass2) return showError("Şifreler eşleşmiyor!");
+                if(age < 18) return showError("Yaş 18'den küçük olamaz!");
+
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username: user, password: pass, age: parseInt(age), user_type: type })
+                });
+                const data = await res.json();
+                if(data.error) return showError(data.error);
+                currentUser = { username: user, age, user_type: type, avatar: data.avatar };
+            } else {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                const data = await res.json();
+                if(data.error) return showError(data.error);
+                currentUser = data;
+            }
+
+            localStorage.setItem('userData', JSON.stringify(currentUser));
             initDashboard();
+        }
+
+        function showError(m) {
+            const e = document.getElementById('authError');
+            e.innerText = m;
+            e.style.display = 'block';
         }
 
         function initDashboard() {
@@ -206,36 +219,13 @@
             document.getElementById('navAvatar').src = currentUser.avatar;
             document.getElementById('profileAvatar').src = currentUser.avatar;
             document.getElementById('profileName').innerText = currentUser.username;
-            document.getElementById('profileAge').innerText = currentUser.age + " Yaş";
-            document.getElementById('profileType').innerText = currentUser.user_type === 'seeker' ? 'İş Arayan Üye' : 'Kurumsal İş Veren';
+            document.getElementById('profileAge').innerText = currentUser.age;
+            document.getElementById('profileType').innerText = currentUser.user_type === 'seeker' ? 'İş Arayan' : 'İş Veren';
             
-            document.getElementById('editUsername').value = currentUser.username;
-            document.getElementById('editAge').value = currentUser.age;
-
-            if(currentUser.user_type === 'employer') document.getElementById('jobCreateBtn').classList.remove('hidden');
+            if(currentUser.user_type === 'employer') {
+                document.getElementById('jobCreateBtn').classList.remove('hidden');
+            }
             loadJobs();
-        }
-
-        async function updateProfile() {
-            const formData = new FormData();
-            formData.append('old_username', currentUser.username);
-            formData.append('new_username', document.getElementById('editUsername').value);
-            formData.append('new_age', document.getElementById('editAge').value);
-            formData.append('current_avatar', currentUser.avatar);
-            
-            const file = document.getElementById('editFile').files[0];
-            if(file) formData.append('new_avatar', file);
-
-            const res = await fetch('/api/update-profile', { method: 'POST', body: formData });
-            const data = await res.json();
-            
-            if(data.status === "success") {
-                currentUser.username = document.getElementById('editUsername').value;
-                currentUser.age = document.getElementById('editAge').value;
-                currentUser.avatar = data.newAvatar;
-                localStorage.setItem('user_pro_data', JSON.stringify(currentUser));
-                location.reload();
-            } else { alert(data.error); }
         }
 
         async function loadJobs() {
@@ -244,86 +234,70 @@
             const cont = document.getElementById('jobContainer');
             
             cont.innerHTML = data.map(j => `
-                <div class="bg-white rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all p-3 border border-gray-100 flex flex-col h-full">
-                    ${j.image_url ? `<img src="${j.image_url}" class="h-48 w-full object-cover rounded-[2rem] mb-4">` : `<div class="h-48 bg-slate-50 flex items-center justify-center rounded-[2rem] mb-4"><i class="fa-solid fa-image text-slate-200 text-5xl"></i></div>`}
-                    <div class="px-4 pb-4 flex flex-col flex-grow">
-                        <div class="flex justify-between items-start mb-3">
-                            <h3 class="font-black text-xl text-slate-800 leading-tight">${j.title}</h3>
-                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full font-black text-xs whitespace-nowrap">${j.salary}</span>
+                <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 flex flex-col">
+                    ${j.image_url ? `<img src="${j.image_url}" class="h-48 w-full object-cover">` : `<div class="h-48 bg-indigo-50 flex items-center justify-center"><i class="fa-solid fa-image text-indigo-200 text-5xl"></i></div>`}
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-black text-xl text-slate-800">${j.title}</h3>
+                            <span class="text-green-600 font-black">${j.salary}</span>
                         </div>
-                        <p class="text-sm text-gray-500 mb-6 flex-grow line-clamp-3">${j.description}</p>
-                        <div class="flex items-center gap-4 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">
-                            <span><i class="fa-solid fa-location-dot text-indigo-500 mr-1"></i> ${j.location}</span>
-                            <span><i class="fa-solid fa-phone text-indigo-500 mr-1"></i> ${j.phone}</span>
+                        <p class="text-sm text-gray-500 mb-4 line-clamp-2">${j.description}</p>
+                        <div class="flex items-center gap-4 text-xs font-bold text-gray-400 mb-6">
+                            <span><i class="fa-solid fa-location-dot"></i> ${j.location}</span>
+                            <span><i class="fa-solid fa-phone"></i> ${j.phone}</span>
                         </div>
-                        <div class="flex gap-2">
-                            ${currentUser.user_type === 'seeker' ? 
-                                `<button onclick="openApply(${j.id})" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs shadow-lg hover:bg-indigo-700">BAŞVURU YAP</button>` : 
-                                (j.owner_username === currentUser.username ? 
-                                    `<button onclick="showInbox(${j.id})" class="flex-1 bg-indigo-100 text-indigo-700 py-4 rounded-2xl font-black text-xs hover:bg-indigo-200">BAŞVURULAR</button>
-                                     <button onclick="deleteJob(${j.id})" class="bg-red-50 text-red-500 px-6 rounded-2xl hover:bg-red-100 transition"><i class="fa-solid fa-trash-can"></i></button>` :
-                                    `<button class="flex-1 bg-gray-50 text-gray-400 py-4 rounded-2xl font-black text-xs cursor-not-allowed">BAŞKA İLAN</button>`)
-                            }
-                        </div>
+                        ${currentUser.user_type === 'seeker' ? 
+                        `<button onclick="openApply(${j.id})" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black hover:bg-indigo-700 transition shadow-lg shadow-indigo-100">BAŞVURU YAP</button>` : 
+                        `<button class="w-full bg-gray-100 text-gray-400 py-4 rounded-2xl font-black cursor-not-allowed">İŞ VEREN MODU</button>`}
                     </div>
                 </div>
             `).join('');
         }
 
-        async function saveJob() {
-            const f = new FormData();
-            f.append('owner_username', currentUser.username);
-            f.append('title', document.getElementById('jTitle').value);
-            f.append('salary', document.getElementById('jSalary').value);
-            f.append('location', document.getElementById('jLoc').value);
-            f.append('phone', document.getElementById('jPhone').value);
-            f.append('description', document.getElementById('jDesc').value);
-            const file = document.getElementById('jFile').files[0];
-            if(file) f.append('job_image', file);
+        function openJobModal() { document.getElementById('jobModal').classList.remove('hidden'); }
+        function closeJobModal() { document.getElementById('jobModal').classList.add('hidden'); }
 
-            await fetch('/api/jobs', { method: 'POST', body: f });
-            location.reload();
+        async function saveJob() {
+            const formData = new FormData();
+            formData.append('owner_username', currentUser.username);
+            formData.append('title', document.getElementById('jTitle').value);
+            formData.append('salary', document.getElementById('jSalary').value);
+            formData.append('location', document.getElementById('jLoc').value);
+            formData.append('phone', document.getElementById('jPhone').value);
+            formData.append('description', document.getElementById('jDesc').value);
+            formData.append('age_range', "18-35"); // Sabitlendi veya eklenebilir
+            
+            const fileInput = document.getElementById('jFile');
+            if(fileInput.files[0]) {
+                formData.append('job_image', fileInput.files[0]);
+            }
+
+            await fetch('/api/jobs', {
+                method: 'POST',
+                body: formData
+            });
+            
+            closeJobModal();
+            loadJobs();
         }
 
-        async function deleteJob(id) { if(confirm("Bu ilanı tamamen kaldırmak istiyor musun?")) { await fetch(`/api/jobs/${id}`, {method:'DELETE'}); loadJobs(); } }
-        
-        function openApply(id) { activeJobId = id; document.getElementById('applyModal').classList.remove('hidden'); }
+        function openApply(id) { activeJobId = id; document.getElementById('msgModal').classList.remove('hidden'); }
+
         async function sendApp() {
+            const msg = document.getElementById('mText').value;
             await fetch('/api/messages', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    job_id: activeJobId, 
-                    sender_username: currentUser.username, 
-                    sender_age: currentUser.age, 
-                    message_text: document.getElementById('mText').value 
-                })
+                body: JSON.stringify({ job_id: activeJobId, sender_username: currentUser.username, sender_age: currentUser.age, message_text: msg })
             });
-            alert("Başvurunuz iş verene iletildi!"); 
-            document.getElementById('applyModal').classList.add('hidden');
+            alert("Başvurunuz başarıyla iletildi!");
+            document.getElementById('msgModal').classList.add('hidden');
         }
 
-        async function showInbox(id) {
-            const res = await fetch(`/api/messages/${id}`);
-            const data = await res.json();
-            const list = document.getElementById('messageList');
-            document.getElementById('inboxModal').classList.remove('hidden');
-            list.innerHTML = data.length === 0 ? '<p class="text-center text-gray-400 font-bold p-10">Henüz başvuru gelmemiş.</p>' :
-                data.map(m => `<div class="bg-indigo-50 p-5 rounded-3xl border border-indigo-100 relative">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-                        <span class="text-xs font-black text-indigo-700 uppercase">${m.sender_username} (${m.sender_age} Yaş)</span>
-                    </div>
-                    <p class="text-sm text-slate-700 leading-relaxed font-medium">"${m.message_text}"</p>
-                    <p class="text-[9px] text-gray-400 mt-4 text-right font-bold">${new Date(m.timestamp).toLocaleString()}</p>
-                </div>`).join('');
+        function logout() {
+            localStorage.clear();
+            location.reload();
         }
-
-        function openJobModal() { document.getElementById('jobModal').classList.remove('hidden'); }
-        function closeJobModal() { document.getElementById('jobModal').classList.add('hidden'); }
-        function switchMode(m) { document.getElementById('profileViewMode').classList.toggle('hidden', m==='edit'); document.getElementById('profileEditMode').classList.toggle('hidden', m==='view'); }
-        function toggleDiscordProfile() { document.getElementById('discordProfile').classList.toggle('active'); }
-        function logout() { localStorage.clear(); location.reload(); }
     </script>
 </body>
 </html>
