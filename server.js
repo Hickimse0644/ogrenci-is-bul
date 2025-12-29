@@ -3,15 +3,15 @@ const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const path = require("path");
-const multer = require("multer"); // Dosya yükleme için
+const multer = require("multer");
 
 const app = express();
 const db = new sqlite3.Database("./database.db");
 
-// Resimlerin kaydedileceği klasörü ayarla
+// DOSYA YÜKLEME AYARI (Yeni)
 const storage = multer.diskStorage({
   destination: "./uploads/",
-  filename: function(req, file, cb){
+  filename: (req, file, cb) => {
     cb(null, "img-" + Date.now() + path.extname(file.originalname));
   }
 });
@@ -20,11 +20,11 @@ const upload = multer({ storage: storage });
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
-app.use("/uploads", express.static("uploads")); // Yüklenen resimlere erişim
+app.use("/uploads", express.static("uploads"));
 
-// --- VERİTABANI YAPISI ---
+// --- VERİTABANI (Eski Tablolar + Yeni Sütunlar) ---
 db.serialize(() => {
-  // Kullanıcılar
+  // users tablosuna avatar eklendi, username UNIQUE yapıldı
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
@@ -34,7 +34,7 @@ db.serialize(() => {
     avatar TEXT
   )`);
 
-  // İlanlar (image_url eklendi)
+  // jobs tablosuna image_url eklendi
   db.run(`CREATE TABLE IF NOT EXISTS jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     owner_username TEXT, 
@@ -47,7 +47,6 @@ db.serialize(() => {
     image_url TEXT
   )`);
 
-  // Mesajlar
   db.run(`CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER,
@@ -64,7 +63,7 @@ app.post("/api/register", (req, res) => {
   const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
   db.run("INSERT INTO users (username, password, user_type, age, avatar) VALUES (?, ?, ?, ?, ?)",
     [username, password, user_type, age, avatar], (err) => {
-      if (err) return res.status(400).json({ error: "Bu kullanıcı adı alınmış!" });
+      if (err) return res.status(400).json({ error: "Bu kullanıcı adı zaten alınmış!" });
       res.json({ status: "success", avatar });
     });
 });
@@ -72,30 +71,48 @@ app.post("/api/register", (req, res) => {
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
   db.get("SELECT * FROM users WHERE username = ? AND password = ?", [username, password], (err, row) => {
-    if (err || !row) return res.status(401).json({ error: "Hatalı bilgiler!" });
+    if (err || !row) return res.status(401).json({ error: "Hatalı giriş!" });
     res.json(row);
   });
 });
 
-// --- İLAN İŞLEMLERİ (Resim Yüklemeli) ---
-app.post("/api/jobs", upload.single("job_image"), (req, res) => {
-  const { owner_username, title, salary, location, phone, description, age_range } = req.body;
-  const image_url = req.file ? `/uploads/${req.file.filename}` : null;
-
-  db.run("INSERT INTO jobs (owner_username, title, salary, location, phone, description, age_range, image_url) VALUES (?,?,?,?,?,?,?,?)",
-    [owner_username, title, salary, location, phone, description, age_range, image_url],
-    function(err) { res.json({ id: this.lastID }); });
+// PROFİL GÜNCELLEME (Yeni Özellik)
+app.post("/api/update-profile", upload.single("new_avatar"), (req, res) => {
+    const { old_username, new_username, new_age } = req.body;
+    let avatarUrl = req.body.current_avatar;
+    if (req.file) avatarUrl = `/uploads/${req.file.filename}`;
+  
+    db.run("UPDATE users SET username = ?, age = ?, avatar = ? WHERE username = ?",
+      [new_username, new_age, avatarUrl, old_username], function(err) {
+        if (err) return res.status(400).json({ error: "İsim kullanımda!" });
+        res.json({ status: "success", newAvatar: avatarUrl });
+      });
 });
 
+// --- İLAN İŞLEMLERİ ---
 app.get("/api/jobs", (req, res) => {
   db.all("SELECT * FROM jobs ORDER BY id DESC", (err, rows) => res.json(rows));
 });
 
-// --- MESAJLAR ---
+app.post("/api/jobs", upload.single("job_image"), (req, res) => {
+  const { owner_username, title, salary, location, phone, description, age_range } = req.body;
+  const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+  db.run("INSERT INTO jobs (owner_username, title, salary, location, phone, description, age_range, image_url) VALUES (?,?,?,?,?,?,?,?)",
+    [owner_username, title, salary, location, phone, description, age_range, image_url], function(err) {
+      res.json({ id: this.lastID });
+    });
+});
+
+// ESKİ ÖZELLİK: İLAN SİLME
+app.delete("/api/jobs/:id", (req, res) => {
+    db.run("DELETE FROM jobs WHERE id = ?", [req.params.id], () => res.json({status:"deleted"}));
+});
+
+// --- MESAJ İŞLEMLERİ ---
 app.post("/api/messages", (req, res) => {
   const { job_id, sender_username, sender_age, message_text } = req.body;
   db.run("INSERT INTO messages (job_id, sender_username, sender_age, message_text) VALUES (?,?,?,?)",
-    [job_id, sender_username, sender_age, message_text], (err) => res.json({status:"ok"}));
+    [job_id, sender_username, sender_age, message_text], () => res.json({status:"ok"}));
 });
 
 app.get("/api/messages/:job_id", (req, res) => {
