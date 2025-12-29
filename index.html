@@ -3,361 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>İş Bul | Kurumsal İş Uygulaması</title>
+    <title>İş Bul Pro | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .error-msg { color: #ef4444; font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem; display: none; }
-        input:invalid { border-color: #ef4444; }
+        .discord-card { 
+            display: none; position: absolute; right: 20px; top: 70px; 
+            width: 300px; background: #232428; border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000; overflow: hidden;
+        }
+        .discord-card.active { display: block; animation: slideIn 0.2s ease; }
+        @keyframes slideIn { from { opacity:0; transform: translateY(-10px); } to { opacity:1; transform: translateY(0); } }
+        .error-label { color: #f23f43; font-size: 12px; font-weight: bold; margin-top: 5px; display: none; }
     </style>
 </head>
-<body class="bg-slate-50 font-sans">
+<body class="bg-slate-200">
 
-    <nav class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-50">
+    <nav class="bg-indigo-700 p-4 text-white shadow-2xl sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-black tracking-tighter italic">🚀 İŞ BUL PRO</h1>
-            <div id="userInfo" class="flex items-center gap-3">
-                <span id="userBadge" class="text-[10px] bg-indigo-800 px-3 py-1 rounded-full font-bold">Misafir</span>
-                <button onclick="logout()" id="logoutBtn" class="hidden text-xs bg-red-500 px-2 py-1 rounded">Çıkış</button>
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-briefcase text-2xl"></i>
+                <h1 class="text-xl font-black italic tracking-widest">İŞBUL.PRO</h1>
+            </div>
+            <div id="userSection" class="hidden flex items-center gap-4">
+                <button onclick="toggleDiscordProfile()" class="flex items-center gap-2 hover:bg-indigo-600 p-2 rounded-lg transition">
+                    <img id="navAvatar" class="w-8 h-8 rounded-full border-2 border-white">
+                    <span id="navUser" class="font-bold"></span>
+                </button>
             </div>
         </div>
     </nav>
 
-    <div class="container mx-auto p-4 max-w-2xl">
-        
-        <div id="authModal" class="fixed inset-0 bg-indigo-950 z-[100] flex items-center justify-center p-6 text-white">
-            <div class="w-full max-w-md bg-white text-gray-800 p-8 rounded-[2rem] shadow-2xl overflow-y-auto max-h-[95vh]">
-                <h2 class="text-3xl font-black text-indigo-700 mb-2 text-center">Hoş Geldiniz</h2>
-                <p class="text-center text-gray-500 text-sm mb-6" id="authSubtitle">Lütfen hesabınıza giriş yapın.</p>
+    <div id="discordProfile" class="discord-card text-white font-sans">
+        <div class="h-20 bg-indigo-500"></div>
+        <div class="px-4 pb-4 relative">
+            <img id="profileAvatar" class="w-20 h-20 rounded-full border-[6px] border-[#232428] absolute -top-10 left-4 bg-[#232428]">
+            <div class="mt-12">
+                <h2 id="profileName" class="text-xl font-bold">Kullanıcı Adı</h2>
+                <p class="text-gray-400 text-xs mb-4">Üye #0001</p>
                 
-                <div class="space-y-3">
-                    <div id="loginFieldWrapper">
-                        <input id="authIdentifier" type="text" placeholder="E-posta veya Kullanıcı Adı" class="w-full p-4 bg-gray-100 rounded-2xl outline-none focus:ring-2 ring-indigo-500">
-                        <p id="error-identifier" class="error-msg ml-2"></p>
+                <div class="bg-[#111214] rounded-lg p-3 space-y-3">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase">Hakkımda</p>
+                        <p id="profileType" class="text-sm">İş Arayan</p>
                     </div>
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase">Yaş</p>
+                        <p id="profileAge" class="text-sm">--</p>
+                    </div>
+                </div>
+                
+                <button onclick="logout()" class="w-full mt-4 bg-red-500 hover:bg-red-600 py-2 rounded font-bold transition">Çıkış Yap</button>
+            </div>
+        </div>
+    </div>
 
-                    <div id="registerFields" class="hidden space-y-3 border-t pt-4">
-                        <input id="authUsername" type="text" placeholder="Kullanıcı Adı Seçin" class="w-full p-4 bg-gray-100 rounded-2xl outline-none focus:ring-2 ring-indigo-500">
-                        <input id="authEmail" type="email" placeholder="E-posta Adresiniz" class="w-full p-4 bg-gray-100 rounded-2xl outline-none focus:ring-2 ring-indigo-500">
-                        <select id="authUserType" class="w-full p-4 bg-gray-100 rounded-2xl outline-none">
+    <div class="container mx-auto p-6 max-w-4xl">
+        <div id="authScreen" class="fixed inset-0 bg-indigo-950 flex items-center justify-center z-[2000] p-4">
+            <div class="bg-white w-full max-w-md p-8 rounded-[2rem] shadow-2xl">
+                <h2 id="authHeading" class="text-3xl font-black text-indigo-700 mb-6 text-center">Giriş Yap</h2>
+                <div class="space-y-4">
+                    <input id="inUsername" type="text" placeholder="Kullanıcı Adı" class="w-full p-4 bg-gray-100 rounded-xl border-0 focus:ring-2 ring-indigo-500 outline-none">
+                    <div id="regOnly" class="hidden space-y-4">
+                        <input id="inAge" type="number" placeholder="Yaşınız (18+)" class="w-full p-4 bg-gray-100 rounded-xl outline-none">
+                        <select id="inType" class="w-full p-4 bg-gray-100 rounded-xl outline-none">
                             <option value="seeker">İş Arıyorum</option>
                             <option value="employer">İş Verenim</option>
                         </select>
-                        <input id="authAge" type="number" min="18" max="99" placeholder="Yaşınız (Min 18)" class="w-full p-4 bg-gray-100 rounded-2xl outline-none">
                     </div>
-
                     <div class="relative">
-                        <input id="authPass" type="password" placeholder="Şifreniz (En az 8 karakter)" class="w-full p-4 bg-gray-100 rounded-2xl outline-none focus:ring-2 ring-indigo-500">
-                        <button onclick="togglePass('authPass')" class="absolute right-4 top-4 text-gray-400">
-                            <i class="fa-solid fa-eye" id="eye-authPass"></i>
-                        </button>
+                        <input id="inPass" type="password" placeholder="Şifre" class="w-full p-4 bg-gray-100 rounded-xl outline-none">
+                        <button onclick="togglePass()" class="absolute right-4 top-4 text-gray-400"><i class="fa-solid fa-eye" id="passIcon"></i></button>
                     </div>
-
-                    <div id="confirmPassWrapper" class="hidden relative">
-                        <input id="authPassConfirm" type="password" placeholder="Şifreyi Tekrar Girin" class="w-full p-4 bg-gray-100 rounded-2xl outline-none focus:ring-2 ring-indigo-500">
-                        <button onclick="togglePass('authPassConfirm')" class="absolute right-4 top-4 text-gray-400">
-                            <i class="fa-solid fa-eye" id="eye-authPassConfirm"></i>
-                        </button>
+                    <div id="regConfirm" class="hidden">
+                        <input id="inPass2" type="password" placeholder="Şifre Tekrar" class="w-full p-4 bg-gray-100 rounded-xl outline-none">
                     </div>
-                    
-                    <p id="general-error" class="error-msg text-center font-bold"></p>
-
-                    <div class="flex flex-col gap-2 pt-2">
-                        <button id="authSubmitBtn" onclick="handleAuth()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-lg">Giriş Yap</button>
-                        <button id="toggleRegBtn" onclick="toggleAuthMode()" class="w-full bg-gray-200 text-gray-700 font-bold py-4 rounded-2xl">Hesap Oluştur</button>
-                    </div>
+                    <p id="authError" class="error-label text-center"></p>
+                    <button onclick="handleAuth()" id="authBtn" class="w-full bg-indigo-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-indigo-500 transition">DEVAM ET</button>
+                    <p class="text-center text-sm text-gray-500">
+                        <span id="toggleText">Hesabın yok mu?</span> 
+                        <button onclick="toggleAuthMode()" id="toggleBtn" class="text-indigo-600 font-bold">Kayıt Ol</button>
+                    </p>
                 </div>
             </div>
         </div>
 
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-black text-slate-800">Güncel İlanlar</h2>
-            <button id="postBtn" onclick="openPostModal()" class="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-bold hidden shadow-indigo-200 shadow-xl hover:scale-105 transition">İlan Yayınla</button>
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-black text-slate-800 tracking-tight">İş İlanları</h2>
+            <button id="jobCreateBtn" onclick="openJobModal()" class="hidden bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black shadow-xl hover:scale-105 transition">YENİ İLAN YAYINLA</button>
         </div>
 
-        <div id="jobList" class="space-y-4 pb-20"></div>
+        <div id="jobContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+            </div>
     </div>
 
-    <div id="postModal" class="fixed inset-0 bg-black bg-opacity-60 z-[110] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 id="modalTitle" class="font-black text-2xl mb-6 text-indigo-700">İlan Detayları</h3>
-            <input type="hidden" id="editingJobId">
+    <div id="jobModal" class="fixed inset-0 bg-black/70 hidden z-[3000] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-black mb-6 text-indigo-700">İlan Detaylarını Girin</h3>
             <div class="space-y-4">
-                <input id="title" type="text" placeholder="İş Başlığı" class="w-full p-4 bg-gray-50 rounded-2xl border outline-none focus:border-indigo-500">
-                <div class="flex gap-2">
-                    <input id="salary" type="text" placeholder="Ücret" class="w-full p-4 bg-gray-50 rounded-2xl border">
-                    <input id="location" type="text" placeholder="Konum" class="w-full p-4 bg-gray-50 rounded-2xl border">
+                <input id="jTitle" placeholder="İş Başlığı (Örn: Garson Arıyoruz)" class="w-full p-4 border rounded-xl outline-none">
+                <div class="grid grid-cols-2 gap-4">
+                    <input id="jSalary" placeholder="Ücret/Maaş" class="w-full p-4 border rounded-xl">
+                    <input id="jLoc" placeholder="Şehir/İlçe" class="w-full p-4 border rounded-xl">
                 </div>
-                <div class="p-4 bg-indigo-50 rounded-2xl">
-                    <p class="text-xs font-bold text-indigo-600 mb-3 uppercase tracking-wider">Aranan Yaş Aralığı:</p>
-                    <div class="grid grid-cols-2 gap-2 text-sm font-semibold">
-                        <label class="flex items-center gap-2"><input type="checkbox" name="ageRange" value="18-24"> 18-24 Yaş</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="ageRange" value="25-35"> 25-35 Yaş</label>
-                        <label class="flex items-center gap-2"><input type="checkbox" name="ageRange" value="35+"> 35+ Yaş</label>
-                    </div>
+                <input id="jPhone" placeholder="İletişim Numarası" class="w-full p-4 border rounded-xl">
+                
+                <div class="p-4 bg-gray-50 rounded-xl border-2 border-dashed border-indigo-200">
+                    <p class="text-xs font-bold text-indigo-600 mb-2 uppercase">İş Görseli Seç</p>
+                    <input type="file" id="jFile" accept="image/*" class="text-xs">
                 </div>
-                <input id="phone" type="text" placeholder="İletişim Tel" class="w-full p-4 bg-gray-50 rounded-2xl border">
-                <textarea id="description" placeholder="Şartlar ve detaylar..." class="w-full p-4 bg-gray-50 rounded-2xl border h-32 outline-none"></textarea>
-                <div class="flex gap-3 pt-2">
-                    <button onclick="saveJob()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-extrabold shadow-lg">Yayınla</button>
-                    <button onclick="closePostModal()" class="w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold">Kapat</button>
+
+                <textarea id="jDesc" placeholder="İşin detayları ve beklentileriniz..." class="w-full p-4 border rounded-xl h-32 outline-none"></textarea>
+                
+                <div class="flex gap-4">
+                    <button onclick="saveJob()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black shadow-lg">YAYINLA</button>
+                    <button onclick="closeJobModal()" class="w-full bg-gray-100 py-4 rounded-xl font-bold">İPTAL</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 z-[120] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-xs rounded-[2rem] p-6 shadow-2xl text-center">
-            <h3 class="font-bold text-xl mb-4 text-indigo-700">Başvuru Yap</h3>
-            <textarea id="msgText" placeholder="Kısaca kendinden bahset..." class="w-full p-4 bg-gray-50 rounded-2xl border h-32 outline-none mb-4"></textarea>
-            <input type="hidden" id="currentJobId">
-            <div class="flex gap-2">
-                <button onclick="sendMessage()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Gönder</button>
-                <button onclick="document.getElementById('messageModal').classList.add('hidden')" class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold">İptal</button>
+    <div id="msgModal" class="fixed inset-0 bg-black/60 hidden z-[4000] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2rem] p-8 shadow-2xl">
+            <h3 class="text-xl font-black mb-4">Hızlı Başvuru</h3>
+            <textarea id="mText" class="w-full p-4 bg-gray-50 border rounded-2xl h-40 outline-none mb-4" placeholder="Kendinizden bahsedin..."></textarea>
+            <div class="flex gap-3">
+                <button onclick="sendApp()" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold">GÖNDER</button>
+                <button onclick="document.getElementById('msgModal').classList.add('hidden')" class="flex-1 bg-gray-100 py-4 rounded-xl font-bold">KAPAT</button>
             </div>
-        </div>
-    </div>
-
-    <div id="inboxModal" class="fixed inset-0 bg-black bg-opacity-50 z-[120] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[2rem] p-8 shadow-2xl max-h-[80vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-black text-xl text-indigo-700">Gelen Başvurular</h3>
-                <button onclick="document.getElementById('inboxModal').classList.add('hidden')" class="text-gray-400 text-2xl"><i class="fa-solid fa-x"></i></button>
-            </div>
-            <div id="messageList" class="space-y-4"></div>
         </div>
     </div>
 
     <script>
         let currentUser = null;
         let isRegisterMode = false;
+        let activeJobId = null;
 
         window.onload = () => {
-            const savedUser = localStorage.getItem('user');
-            if(savedUser) {
-                currentUser = JSON.parse(savedUser);
-                document.getElementById('authModal').classList.add('hidden');
-                initApp();
+            const saved = localStorage.getItem('userData');
+            if(saved) {
+                currentUser = JSON.parse(saved);
+                initDashboard();
             }
-        };
-
-        function togglePass(id) {
-            const input = document.getElementById(id);
-            const eye = document.getElementById('eye-' + id);
-            if(input.type === 'password') {
-                input.type = 'text';
-                eye.classList.replace('fa-eye', 'fa-eye-slash');
-            } else {
-                input.type = 'password';
-                eye.classList.replace('fa-eye-slash', 'fa-eye');
-            }
-        }
-
-        function showError(msg) {
-            const errEl = document.getElementById('general-error');
-            errEl.innerText = msg;
-            errEl.style.display = 'block';
         }
 
         function toggleAuthMode() {
             isRegisterMode = !isRegisterMode;
-            document.getElementById('registerFields').classList.toggle('hidden');
-            document.getElementById('confirmPassWrapper').classList.toggle('hidden');
-            document.getElementById('loginFieldWrapper').classList.toggle('hidden');
-            document.getElementById('authSubmitBtn').innerText = isRegisterMode ? 'Kayıt Ol ve Gir' : 'Giriş Yap';
-            document.getElementById('toggleRegBtn').innerText = isRegisterMode ? 'Vazgeç' : 'Hesap Oluştur';
-            document.getElementById('authSubtitle').innerText = isRegisterMode ? 'Yeni bir hesap oluşturun.' : 'Lütfen hesabınıza giriş yapın.';
-            document.getElementById('general-error').style.display = 'none';
+            document.getElementById('regOnly').classList.toggle('hidden');
+            document.getElementById('regConfirm').classList.toggle('hidden');
+            document.getElementById('authHeading').innerText = isRegisterMode ? "Hesap Oluştur" : "Giriş Yap";
+            document.getElementById('toggleText').innerText = isRegisterMode ? "Zaten hesabın var mı?" : "Hesabın yok mu?";
+            document.getElementById('toggleBtn').innerText = isRegisterMode ? "Giriş Yap" : "Kayıt Ol";
+        }
+
+        function togglePass() {
+            const p = document.getElementById('inPass');
+            const icon = document.getElementById('passIcon');
+            p.type = p.type === 'password' ? 'text' : 'password';
+            icon.classList.toggle('fa-eye-slash');
+        }
+
+        function toggleDiscordProfile() {
+            document.getElementById('discordProfile').classList.toggle('active');
         }
 
         async function handleAuth() {
-            document.getElementById('general-error').style.display = 'none';
-            const pass = document.getElementById('authPass').value;
+            const user = document.getElementById('inUsername').value;
+            const pass = document.getElementById('inPass').value;
+            const err = document.getElementById('authError');
+            err.style.display = 'none';
 
             if(isRegisterMode) {
-                const username = document.getElementById('authUsername').value;
-                const email = document.getElementById('authEmail').value;
-                const age = document.getElementById('authAge').value;
-                const passConfirm = document.getElementById('authPassConfirm').value;
-                const user_type = document.getElementById('authUserType').value;
+                const age = document.getElementById('inAge').value;
+                const pass2 = document.getElementById('inPass2').value;
+                const type = document.getElementById('inType').value;
 
-                // Kontroller
-                if(!username || !email || !pass || !age) return showError("Tüm alanları doldurun!");
-                if(!email.includes('@')) return showError("Geçerli bir e-posta girin!");
-                if(username.length < 3) return showError("Kullanıcı adı çok kısa!");
-                if(pass.length < 8) return showError("Şifre en az 8 karakter olmalı!");
-                if(pass !== passConfirm) return showError("Şifreler uyuşmuyor!");
-                if(age < 18) return showError("18 yaşından küçükler kayıt olamaz!");
+                if(user.length < 3) return showError("Kullanıcı adı çok kısa!");
+                if(pass.length < 8) return showError("Şifre en az 8 karakter!");
+                if(pass !== pass2) return showError("Şifreler eşleşmiyor!");
+                if(age < 18) return showError("Yaş 18'den küçük olamaz!");
 
                 const res = await fetch('/api/register', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ username, email, password: pass, user_type, age: parseInt(age) })
+                    body: JSON.stringify({ username: user, password: pass, age: parseInt(age), user_type: type })
                 });
                 const data = await res.json();
                 if(data.error) return showError(data.error);
-                currentUser = { username, email, user_type, age: parseInt(age) };
+                currentUser = { username: user, age, user_type: type, avatar: data.avatar };
             } else {
-                const identifier = document.getElementById('authIdentifier').value;
-                if(!identifier || !pass) return showError("Bilgileri girin!");
-
                 const res = await fetch('/api/login', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ identifier, password: pass })
+                    body: JSON.stringify({ username: user, password: pass })
                 });
                 const data = await res.json();
                 if(data.error) return showError(data.error);
                 currentUser = data;
             }
 
-            localStorage.setItem('user', JSON.stringify(currentUser));
-            document.getElementById('authModal').classList.add('hidden');
-            initApp();
+            localStorage.setItem('userData', JSON.stringify(currentUser));
+            initDashboard();
         }
 
-        function logout() {
-            localStorage.clear();
-            location.reload();
+        function showError(m) {
+            const e = document.getElementById('authError');
+            e.innerText = m;
+            e.style.display = 'block';
         }
 
-        function initApp() {
-            document.getElementById('logoutBtn').classList.remove('hidden');
-            document.getElementById('userBadge').innerText = currentUser.user_type === 'seeker' ? `👤 ${currentUser.username} (${currentUser.age})` : `💼 İş Veren (${currentUser.username})`;
+        function initDashboard() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('userSection').classList.remove('hidden');
+            document.getElementById('navUser').innerText = currentUser.username;
+            document.getElementById('navAvatar').src = currentUser.avatar;
+            document.getElementById('profileAvatar').src = currentUser.avatar;
+            document.getElementById('profileName').innerText = currentUser.username;
+            document.getElementById('profileAge').innerText = currentUser.age;
+            document.getElementById('profileType').innerText = currentUser.user_type === 'seeker' ? 'İş Arayan' : 'İş Veren';
+            
             if(currentUser.user_type === 'employer') {
-                document.getElementById('postBtn').classList.remove('hidden');
+                document.getElementById('jobCreateBtn').classList.remove('hidden');
             }
             loadJobs();
         }
 
         async function loadJobs() {
             const res = await fetch('/api/jobs');
-            const jobs = await res.json();
-            const list = document.getElementById('jobList');
+            const data = await res.json();
+            const cont = document.getElementById('jobContainer');
             
-            list.innerHTML = jobs.map(j => {
-                let ageFit = true;
-                if(currentUser.user_type === 'seeker') {
-                    const ranges = j.age_range.split(', ');
-                    ageFit = ranges.some(r => {
-                        if(r === '35+' && currentUser.age >= 35) return true;
-                        const [min, max] = r.split('-').map(Number);
-                        return currentUser.age >= min && currentUser.age <= max;
-                    });
-                }
-                const isOwner = currentUser.email === j.owner_email;
-
-                return `
-                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-3">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <h3 class="font-extrabold text-xl text-indigo-900 leading-none">${j.title}</h3>
-                            <div class="flex flex-wrap gap-2 mt-3">
-                                <span class="text-[10px] bg-indigo-50 text-indigo-600 font-bold px-3 py-1 rounded-full"><i class="fa-solid fa-map-pin"></i> ${j.location}</span>
-                                <span class="text-[10px] bg-orange-50 text-orange-600 font-bold px-3 py-1 rounded-full"><i class="fa-solid fa-users"></i> ${j.age_range}</span>
-                            </div>
+            cont.innerHTML = data.map(j => `
+                <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 flex flex-col">
+                    ${j.image_url ? `<img src="${j.image_url}" class="h-48 w-full object-cover">` : `<div class="h-48 bg-indigo-50 flex items-center justify-center"><i class="fa-solid fa-image text-indigo-200 text-5xl"></i></div>`}
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-black text-xl text-slate-800">${j.title}</h3>
+                            <span class="text-green-600 font-black">${j.salary}</span>
                         </div>
-                        <span class="text-green-600 font-black text-xl">${j.salary}</span>
+                        <p class="text-sm text-gray-500 mb-4 line-clamp-2">${j.description}</p>
+                        <div class="flex items-center gap-4 text-xs font-bold text-gray-400 mb-6">
+                            <span><i class="fa-solid fa-location-dot"></i> ${j.location}</span>
+                            <span><i class="fa-solid fa-phone"></i> ${j.phone}</span>
+                        </div>
+                        ${currentUser.user_type === 'seeker' ? 
+                        `<button onclick="openApply(${j.id})" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black hover:bg-indigo-700 transition shadow-lg shadow-indigo-100">BAŞVURU YAP</button>` : 
+                        `<button class="w-full bg-gray-100 text-gray-400 py-4 rounded-2xl font-black cursor-not-allowed">İŞ VEREN MODU</button>`}
                     </div>
-                    <p class="text-sm text-gray-500 font-medium">${j.description}</p>
-                    ${!ageFit ? `<p class="text-red-500 text-[10px] font-bold italic underline">⚠️ Yaşınız uygun değil.</p>` : ''}
-                    <div class="flex gap-2 mt-4">
-                        ${currentUser.user_type === 'seeker' ? `
-                            <a href="tel:${j.phone}" class="flex-1 bg-indigo-50 text-indigo-700 text-center py-4 rounded-2xl text-xs font-black">ARA</a>
-                            <button onclick="openMessageModal(${j.id})" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl text-xs font-black shadow-md">MESAJ GÖNDER</button>
-                        ` : (isOwner ? `
-                            <button onclick="showMessages(${j.id})" class="flex-1 bg-indigo-50 text-indigo-700 py-4 rounded-2xl text-xs font-black">GELENLER</button>
-                            <button onclick="openEditModal(${JSON.stringify(j).replace(/"/g, '&quot;')})" class="flex-1 bg-orange-500 text-white py-4 rounded-2xl text-xs font-black shadow-md">DÜZENLE</button>
-                        ` : `<button disabled class="flex-1 bg-gray-100 text-gray-400 py-4 rounded-2xl text-xs font-black">BAŞKASININ İLANI</button>`)}
-                    </div>
-                </div>`;
-            }).join('');
+                </div>
+            `).join('');
         }
 
-        // İLAN FONKSİYONLARI (Aynen Korundu)
-        function openPostModal() {
-            document.getElementById('editingJobId').value = '';
-            document.getElementById('modalTitle').innerText = "Yeni İlan";
-            clearForm();
-            document.getElementById('postModal').classList.remove('hidden');
-        }
-
-        function openEditModal(jobData) {
-            document.getElementById('editingJobId').value = jobData.id;
-            document.getElementById('modalTitle').innerText = "İlanı Düzenle";
-            document.getElementById('title').value = jobData.title;
-            document.getElementById('salary').value = jobData.salary;
-            document.getElementById('location').value = jobData.location;
-            document.getElementById('phone').value = jobData.phone;
-            document.getElementById('description').value = jobData.description;
-            const ranges = jobData.age_range.split(', ');
-            document.querySelectorAll('input[name="ageRange"]').forEach(cb => cb.checked = ranges.includes(cb.value));
-            document.getElementById('postModal').classList.remove('hidden');
-        }
+        function openJobModal() { document.getElementById('jobModal').classList.remove('hidden'); }
+        function closeJobModal() { document.getElementById('jobModal').classList.add('hidden'); }
 
         async function saveJob() {
-            const editingId = document.getElementById('editingJobId').value;
-            const selectedAges = Array.from(document.querySelectorAll('input[name="ageRange"]:checked')).map(c => c.value);
-            const data = {
-                owner_email: currentUser.email,
-                title: document.getElementById('title').value,
-                salary: document.getElementById('salary').value,
-                location: document.getElementById('location').value,
-                phone: document.getElementById('phone').value,
-                description: document.getElementById('description').value,
-                age_range: selectedAges.join(', ')
-            };
-            const method = editingId ? 'PUT' : 'POST';
-            const url = editingId ? `/api/jobs/${editingId}` : '/api/jobs';
-            await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-            closePostModal();
+            const formData = new FormData();
+            formData.append('owner_username', currentUser.username);
+            formData.append('title', document.getElementById('jTitle').value);
+            formData.append('salary', document.getElementById('jSalary').value);
+            formData.append('location', document.getElementById('jLoc').value);
+            formData.append('phone', document.getElementById('jPhone').value);
+            formData.append('description', document.getElementById('jDesc').value);
+            formData.append('age_range', "18-35"); // Sabitlendi veya eklenebilir
+            
+            const fileInput = document.getElementById('jFile');
+            if(fileInput.files[0]) {
+                formData.append('job_image', fileInput.files[0]);
+            }
+
+            await fetch('/api/jobs', {
+                method: 'POST',
+                body: formData
+            });
+            
+            closeJobModal();
             loadJobs();
         }
 
-        function clearForm() {
-            document.getElementById('title').value = '';
-            document.getElementById('salary').value = '';
-            document.getElementById('location').value = '';
-            document.getElementById('phone').value = '';
-            document.getElementById('description').value = '';
-            document.querySelectorAll('input[name="ageRange"]').forEach(cb => cb.checked = false);
+        function openApply(id) { activeJobId = id; document.getElementById('msgModal').classList.remove('hidden'); }
+
+        async function sendApp() {
+            const msg = document.getElementById('mText').value;
+            await fetch('/api/messages', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ job_id: activeJobId, sender_username: currentUser.username, sender_age: currentUser.age, message_text: msg })
+            });
+            alert("Başvurunuz başarıyla iletildi!");
+            document.getElementById('msgModal').classList.add('hidden');
         }
 
-        function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
-
-        function openMessageModal(jobId) {
-            document.getElementById('currentJobId').value = jobId;
-            document.getElementById('messageModal').classList.remove('hidden');
-        }
-
-        async function sendMessage() {
-            const data = {
-                job_id: document.getElementById('currentJobId').value,
-                sender_email: currentUser.email,
-                sender_age: currentUser.age,
-                message_text: document.getElementById('msgText').value
-            };
-            await fetch('/api/messages', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-            alert("Mesaj iletildi!");
-            document.getElementById('messageModal').classList.add('hidden');
-            document.getElementById('msgText').value = '';
-        }
-
-        async function showMessages(jobId) {
-            const res = await fetch(`/api/messages/${jobId}`);
-            const messages = await res.json();
-            const list = document.getElementById('messageList');
-            document.getElementById('inboxModal').classList.remove('hidden');
-            list.innerHTML = messages.length === 0 ? '<p class="text-center text-gray-400">Henüz başvuru yok.</p>' : 
-            messages.map(m => `
-                <div class="bg-gray-50 p-5 rounded-2xl border border-indigo-100">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-black">ADAY: ${m.sender_age} YAŞ</span>
-                        <span class="text-[10px] text-gray-400 font-bold">${m.sender_email}</span>
-                    </div>
-                    <p class="text-sm text-gray-700 italic font-medium">"${m.message_text}"</p>
-                </div>
-            `).join('');
+        function logout() {
+            localStorage.clear();
+            location.reload();
         }
     </script>
 </body>

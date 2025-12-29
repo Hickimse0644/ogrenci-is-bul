@@ -3,139 +3,103 @@ const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const path = require("path");
+const multer = require("multer"); // Dosya yükleme için
 
 const app = express();
 const db = new sqlite3.Database("./database.db");
 
+// Resimlerin kaydedileceği klasörü ayarla
+const storage = multer.diskStorage({
+  destination: "./uploads/",
+  filename: function(req, file, cb){
+    cb(null, "img-" + Date.now() + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage: storage });
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
+app.use("/uploads", express.static("uploads")); // Yüklenen resimlere erişim
 
-// --- VERİTABANI TABLOLARINI OLUŞTURMA ---
+// --- VERİTABANI YAPISI ---
 db.serialize(() => {
-  // Kullanıcılar Tablosuna username eklendi
+  // Kullanıcılar
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
-    email TEXT UNIQUE,
     password TEXT,
     user_type TEXT,
-    age INTEGER
+    age INTEGER,
+    avatar TEXT
   )`);
 
+  // İlanlar (image_url eklendi)
   db.run(`CREATE TABLE IF NOT EXISTS jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    owner_email TEXT, 
+    owner_username TEXT, 
     title TEXT,
     salary TEXT,
     location TEXT,
     phone TEXT,
     description TEXT,
-    age_range TEXT
+    age_range TEXT,
+    image_url TEXT
   )`);
 
+  // Mesajlar
   db.run(`CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER,
-    sender_email TEXT,
+    sender_username TEXT,
     sender_age INTEGER,
     message_text TEXT,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 });
 
-// --- KAYIT VE GİRİŞ SİSTEMİ ---
-
+// --- AUTH İŞLEMLERİ ---
 app.post("/api/register", (req, res) => {
-  const { username, email, password, user_type, age } = req.body;
-  
-  // Basit bir sunucu tarafı kontrolü
-  if (age < 18) return res.status(400).json({ error: "Yaş 18'den küçük olamaz!" });
-
-  db.run(
-    "INSERT INTO users (username, email, password, user_type, age) VALUES (?, ?, ?, ?, ?)",
-    [username, email, password, user_type, age],
-    function(err) {
-      if (err) {
-        if (err.message.includes("users.email")) return res.status(400).json({ error: "Bu e-posta zaten kullanımda!" });
-        if (err.message.includes("users.username")) return res.status(400).json({ error: "Bu kullanıcı adı zaten alınmış!" });
-        return res.status(400).json({ error: "Kayıt sırasında bir hata oluştu." });
-      }
-      res.json({ id: this.lastID, status: "success" });
-    }
-  );
+  const { username, password, user_type, age } = req.body;
+  const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
+  db.run("INSERT INTO users (username, password, user_type, age, avatar) VALUES (?, ?, ?, ?, ?)",
+    [username, password, user_type, age, avatar], (err) => {
+      if (err) return res.status(400).json({ error: "Bu kullanıcı adı alınmış!" });
+      res.json({ status: "success", avatar });
+    });
 });
 
 app.post("/api/login", (req, res) => {
-  const { identifier, password } = req.body; // identifier: e-posta veya kullanıcı adı olabilir
-  db.get(
-    "SELECT * FROM users WHERE (email = ? OR username = ?) AND password = ?", 
-    [identifier, identifier, password], 
-    (err, row) => {
-      if (err || !row) {
-        return res.status(401).json({ error: "Bilgiler hatalı!" });
-      }
-      res.json(row);
-    }
-  );
-});
-
-// --- İLAN İŞLEMLERİ ---
-app.get("/api/jobs", (req, res) => {
-  db.all("SELECT * FROM jobs ORDER BY id DESC", (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
+  const { username, password } = req.body;
+  db.get("SELECT * FROM users WHERE username = ? AND password = ?", [username, password], (err, row) => {
+    if (err || !row) return res.status(401).json({ error: "Hatalı bilgiler!" });
+    res.json(row);
   });
 });
 
-app.post("/api/jobs", (req, res) => {
-  const { owner_email, title, salary, location, phone, description, age_range } = req.body;
-  db.run(
-    "INSERT INTO jobs (owner_email, title, salary, location, phone, description, age_range) VALUES (?,?,?,?,?,?,?)",
-    [owner_email, title, salary, location, phone, description, age_range],
-    function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: this.lastID });
-    }
-  );
+// --- İLAN İŞLEMLERİ (Resim Yüklemeli) ---
+app.post("/api/jobs", upload.single("job_image"), (req, res) => {
+  const { owner_username, title, salary, location, phone, description, age_range } = req.body;
+  const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+
+  db.run("INSERT INTO jobs (owner_username, title, salary, location, phone, description, age_range, image_url) VALUES (?,?,?,?,?,?,?,?)",
+    [owner_username, title, salary, location, phone, description, age_range, image_url],
+    function(err) { res.json({ id: this.lastID }); });
 });
 
-app.put("/api/jobs/:id", (req, res) => {
-  const { title, salary, location, phone, description, age_range } = req.body;
-  const jobId = req.params.id;
-  db.run(
-    "UPDATE jobs SET title=?, salary=?, location=?, phone=?, description=?, age_range=? WHERE id=?",
-    [title, salary, location, phone, description, age_range, jobId],
-    function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ status: "updated" });
-    }
-  );
+app.get("/api/jobs", (req, res) => {
+  db.all("SELECT * FROM jobs ORDER BY id DESC", (err, rows) => res.json(rows));
 });
 
-// --- MESAJ İŞLEMLERİ ---
+// --- MESAJLAR ---
 app.post("/api/messages", (req, res) => {
-  const { job_id, sender_email, sender_age, message_text } = req.body;
-  db.run(
-    "INSERT INTO messages (job_id, sender_email, sender_age, message_text) VALUES (?,?,?,?)",
-    [job_id, sender_email, sender_age, message_text],
-    function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ status: "ok" });
-    }
-  );
+  const { job_id, sender_username, sender_age, message_text } = req.body;
+  db.run("INSERT INTO messages (job_id, sender_username, sender_age, message_text) VALUES (?,?,?,?)",
+    [job_id, sender_username, sender_age, message_text], (err) => res.json({status:"ok"}));
 });
 
 app.get("/api/messages/:job_id", (req, res) => {
-  db.all("SELECT * FROM messages WHERE job_id = ? ORDER BY timestamp DESC", [req.params.job_id], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
+  db.all("SELECT * FROM messages WHERE job_id = ? ORDER BY timestamp DESC", [req.params.job_id], (err, rows) => res.json(rows));
 });
 
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Sunucu http://localhost:${PORT} adresinde çalışıyor!`));
+app.listen(3000, () => console.log("Sunucu 3000 portunda aktif."));
