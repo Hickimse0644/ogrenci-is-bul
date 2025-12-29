@@ -5,7 +5,6 @@ const bodyParser = require("body-parser");
 const path = require("path");
 
 const app = express();
-// Veritabanı dosyamızı bağlıyoruz
 const db = new sqlite3.Database("./database.db");
 
 app.use(cors());
@@ -14,16 +13,16 @@ app.use(express.static(path.join(__dirname)));
 
 // --- VERİTABANI TABLOLARINI OLUŞTURMA ---
 db.serialize(() => {
-  // Kullanıcılar Tablosu (E-posta benzersiz olmalı)
+  // Kullanıcılar Tablosuna username eklendi
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
     email TEXT UNIQUE,
     password TEXT,
     user_type TEXT,
     age INTEGER
   )`);
 
-  // İlanlar Tablosu
   db.run(`CREATE TABLE IF NOT EXISTS jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     owner_email TEXT, 
@@ -35,7 +34,6 @@ db.serialize(() => {
     age_range TEXT
   )`);
 
-  // Mesajlar Tablosu
   db.run(`CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER,
@@ -48,36 +46,41 @@ db.serialize(() => {
 
 // --- KAYIT VE GİRİŞ SİSTEMİ ---
 
-// Yeni Kullanıcı Kaydı
 app.post("/api/register", (req, res) => {
-  const { email, password, user_type, age } = req.body;
+  const { username, email, password, user_type, age } = req.body;
+  
+  // Basit bir sunucu tarafı kontrolü
+  if (age < 18) return res.status(400).json({ error: "Yaş 18'den küçük olamaz!" });
+
   db.run(
-    "INSERT INTO users (email, password, user_type, age) VALUES (?, ?, ?, ?)",
-    [email, password, user_type, age],
+    "INSERT INTO users (username, email, password, user_type, age) VALUES (?, ?, ?, ?, ?)",
+    [username, email, password, user_type, age],
     function(err) {
       if (err) {
-        // Eğer e-posta zaten varsa SQLite 'UNIQUE constraint' hatası verir
-        return res.status(400).json({ error: "Bu e-posta adresi zaten kullanımda!" });
+        if (err.message.includes("users.email")) return res.status(400).json({ error: "Bu e-posta zaten kullanımda!" });
+        if (err.message.includes("users.username")) return res.status(400).json({ error: "Bu kullanıcı adı zaten alınmış!" });
+        return res.status(400).json({ error: "Kayıt sırasında bir hata oluştu." });
       }
       res.json({ id: this.lastID, status: "success" });
     }
   );
 });
 
-// Kullanıcı Girişi
 app.post("/api/login", (req, res) => {
-  const { email, password } = req.body;
-  db.get("SELECT * FROM users WHERE email = ? AND password = ?", [email, password], (err, row) => {
-    if (err || !row) {
-      return res.status(401).json({ error: "E-posta veya şifre hatalı!" });
+  const { identifier, password } = req.body; // identifier: e-posta veya kullanıcı adı olabilir
+  db.get(
+    "SELECT * FROM users WHERE (email = ? OR username = ?) AND password = ?", 
+    [identifier, identifier, password], 
+    (err, row) => {
+      if (err || !row) {
+        return res.status(401).json({ error: "Bilgiler hatalı!" });
+      }
+      res.json(row);
     }
-    res.json(row); // Kullanıcı bilgilerini dön (Şifre dahil ama gerçek projede bu güvenli değil, şimdilik basit tutuyoruz)
-  });
+  );
 });
 
 // --- İLAN İŞLEMLERİ ---
-
-// Tüm ilanları getir
 app.get("/api/jobs", (req, res) => {
   db.all("SELECT * FROM jobs ORDER BY id DESC", (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -85,7 +88,6 @@ app.get("/api/jobs", (req, res) => {
   });
 });
 
-// Yeni ilan ekle
 app.post("/api/jobs", (req, res) => {
   const { owner_email, title, salary, location, phone, description, age_range } = req.body;
   db.run(
@@ -98,7 +100,6 @@ app.post("/api/jobs", (req, res) => {
   );
 });
 
-// İlan Güncelleme (Düzenleme)
 app.put("/api/jobs/:id", (req, res) => {
   const { title, salary, location, phone, description, age_range } = req.body;
   const jobId = req.params.id;
@@ -113,7 +114,6 @@ app.put("/api/jobs/:id", (req, res) => {
 });
 
 // --- MESAJ İŞLEMLERİ ---
-
 app.post("/api/messages", (req, res) => {
   const { job_id, sender_email, sender_age, message_text } = req.body;
   db.run(
@@ -133,21 +133,9 @@ app.get("/api/messages/:job_id", (req, res) => {
   });
 });
 
-// SPA yönlendirmesi
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Sunucu http://localhost:${PORT} adresinde çalışıyor!`));
-const regexPass = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
-if (!regexPass.test(pass)) {
-    showError('err-pass', 'Şifre en az bir büyük harf ve bir rakam içermeli.');
-}
-document.addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        // Hangi form açıksa onun fonksiyonunu çalıştır
-        const isLoginHidden = document.getElementById('login-form').classList.contains('hidden');
-        if(isLoginHidden) registerUser(); else loginUser();
-    }
-});
