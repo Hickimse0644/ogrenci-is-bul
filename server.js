@@ -4,17 +4,24 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const path = require("path");
 const multer = require("multer");
+const fs = require("fs"); // Klasör kontrolü için gerekli
 
 const app = express();
-const db = new sqlite3.Database("./jobs.db"); // Dosya adını jobs.db olarak güncelledik
+const db = new sqlite3.Database("./database.db");
 
-// --- RESİM YÜKLEME AYARLARI ---
+// --- ÖNEMLİ: Uploads klasörü yoksa oluştur (Hata önleyici) ---
+const uploadDir = './uploads';
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir);
+}
+
+// Resimlerin kaydedileceği ayarlar
 const storage = multer.diskStorage({
   destination: "./uploads/",
   filename: function(req, file, cb){
-    // Türkçe karakter sorununu önlemek ve benzersiz isim yapmak için:
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, "img-" + uniqueSuffix + path.extname(file.originalname));
+    // Türkçe karakter sorununu önlemek ve benzersiz isim için:
+    const uniqueName = "img-" + Date.now() + path.extname(file.originalname);
+    cb(null, uniqueName);
   }
 });
 
@@ -22,18 +29,19 @@ const upload = multer({ storage: storage });
 
 app.use(cors());
 app.use(bodyParser.json());
-// Statik dosyaları sun (HTML, CSS, JS ve Yüklenen Resimler)
+// Statik dosyaları sun (HTML, CSS, JS)
 app.use(express.static(path.join(__dirname)));
+// Yüklenen resimleri dışarıya aç
 app.use("/uploads", express.static("uploads"));
 
-// --- VERİTABANI KURULUMU ---
+// --- VERİTABANI YAPISI ---
 db.serialize(() => {
   // Kullanıcılar Tablosu
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
     password TEXT,
-    user_type TEXT, -- 'employer' (İş Veren) veya 'employee' (İş Arayan)
+    user_type TEXT,
     age INTEGER,
     avatar TEXT
   )`);
@@ -56,30 +64,25 @@ db.serialize(() => {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER,
     sender_username TEXT,
-    receiver_username TEXT, -- Mesajın kime gittiğini tutmak için
     sender_age INTEGER,
     message_text TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 });
 
-// --- KULLANICI İŞLEMLERİ ---
-
-// Kayıt Ol
+// --- AUTH İŞLEMLERİ ---
 app.post("/api/register", (req, res) => {
   const { username, password, user_type, age } = req.body;
-  // Varsayılan nötr avatar (gri insan silüeti)
-  const defaultAvatar = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+  // Varsayılan avatar
+  const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
   
-  db.run("INSERT INTO users (username, password, user_type, age, avatar) VALUES (?,?,?,?,?)", 
-    [username, password, user_type, age, defaultAvatar], 
-    function(err) {
-      if (err) return res.status(500).json({ error: "Kullanıcı adı alınmış veya hata oluştu." });
-      res.json({ id: this.lastID, username, user_type, age, avatar: defaultAvatar });
+  db.run("INSERT INTO users (username, password, user_type, age, avatar) VALUES (?, ?, ?, ?, ?)",
+    [username, password, user_type, age, avatar], (err) => {
+      if (err) return res.status(400).json({ error: "Bu kullanıcı adı alınmış veya hata oluştu!" });
+      res.json({ status: "success", avatar });
     });
 });
 
-// Giriş Yap
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
   db.get("SELECT * FROM users WHERE username = ? AND password = ?", [username, password], (err, row) => {
@@ -88,86 +91,45 @@ app.post("/api/login", (req, res) => {
   });
 });
 
-// Profil Resmi Güncelleme
-app.post("/api/update-avatar", upload.single("avatar"), (req, res) => {
-  const { username } = req.body;
-  const avatarUrl = req.file ? `/uploads/${req.file.filename}` : null;
-
-  if (!avatarUrl) return res.status(400).json({ error: "Dosya yüklenemedi." });
-
-  db.run("UPDATE users SET avatar = ? WHERE username = ?", [avatarUrl, username], function(err) {
-    if (err) return res.status(500).json({ error: "Veritabanı hatası" });
-    res.json({ avatar: avatarUrl });
-  });
-});
-
 // --- İLAN İŞLEMLERİ ---
 
-// İlan Ekle
+// İlan Ekleme (Resim Yüklemeli - DÜZELTİLDİ)
 app.post("/api/jobs", upload.single("job_image"), (req, res) => {
   const { owner_username, title, salary, location, phone, description, age_range } = req.body;
+  // Eğer dosya yüklendiyse yolunu al, yüklenmediyse null yap
   const image_url = req.file ? `/uploads/${req.file.filename}` : null;
 
   db.run("INSERT INTO jobs (owner_username, title, salary, location, phone, description, age_range, image_url) VALUES (?,?,?,?,?,?,?,?)",
     [owner_username, title, salary, location, phone, description, age_range, image_url],
     function(err) { 
-        if(err) return res.status(500).json({error: err.message});
-        res.json({ id: this.lastID }); 
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, image_url: image_url }); 
     });
 });
 
 // İlanları Getir
 app.get("/api/jobs", (req, res) => {
   db.all("SELECT * FROM jobs ORDER BY id DESC", (err, rows) => {
-      if(err) return res.status(500).json([]);
+      if(err) return res.json([]);
       res.json(rows);
   });
 });
 
-// İlan Sil
+// İlan Silme (Ekstra Özellik)
 app.delete("/api/jobs/:id", (req, res) => {
     const id = req.params.id;
-    // Güvenlik: Gerçek hayatta burada kullanıcının bu ilanın sahibi olup olmadığını kontrol etmek gerekir.
-    // Şimdilik basitçe ID'ye göre siliyoruz.
     db.run("DELETE FROM jobs WHERE id = ?", id, function(err) {
         if (err) return res.status(500).json({ error: "Silinemedi" });
-        res.json({ message: "Silindi" });
+        res.json({ status: "ok" });
     });
 });
 
-// --- MESAJ İŞLEMLERİ ---
-
-// Mesaj Gönder
+// --- MESAJLAR ---
 app.post("/api/messages", (req, res) => {
-  // receiver_username (İlan sahibini) bulmamız lazım önce
   const { job_id, sender_username, sender_age, message_text } = req.body;
-  
-  // İlan sahibini bul
-  db.get("SELECT owner_username FROM jobs WHERE id = ?", [job_id], (err, row) => {
-      if(err || !row) return res.status(404).json({error: "İlan bulunamadı"});
-      
-      const receiver_username = row.owner_username;
-
-      db.run("INSERT INTO messages (job_id, sender_username, receiver_username, sender_age, message_text) VALUES (?,?,?,?,?)",
-        [job_id, sender_username, receiver_username, sender_age, message_text],
-        function(err) {
-            if(err) return res.status(500).json({error: err.message});
-            res.json({ success: true });
-        });
-  });
+  db.run("INSERT INTO messages (job_id, sender_username, sender_age, message_text) VALUES (?,?,?,?)",
+    [job_id, sender_username, sender_age, message_text], (err) => res.json({status:"ok"}));
 });
 
-// Bana Gelen Mesajları Getir
-app.get("/api/my-messages", (req, res) => {
-    const username = req.query.username;
-    db.all("SELECT * FROM messages WHERE receiver_username = ? ORDER BY id DESC", [username], (err, rows) => {
-        if(err) return res.status(500).json([]);
-        res.json(rows);
-    });
-});
-
-// Sunucuyu Başlat
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Sunucu http://localhost:${PORT} adresinde çalışıyor.`);
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Sunucu ${PORT} portunda çalışıyor.`));
