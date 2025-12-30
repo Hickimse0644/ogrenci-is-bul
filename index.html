@@ -19,6 +19,7 @@
         
         /* Modal Arka Planı */
         .modal-bg { background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); }
+        .custom-scroll { scrollbar-width: thin; scrollbar-color: #4f46e5 #1f2937; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white">
@@ -108,7 +109,7 @@
                 <button onclick="openMessages()" class="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-700 text-gray-200 transition flex items-center gap-3">
                     <i class="fas fa-envelope text-indigo-400"></i> Gelen Kutusu
                 </button>
-                <button id="addJobBtn" onclick="document.getElementById('jobModal').classList.remove('hidden')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-700 text-gray-200 transition flex items-center gap-3 hidden">
+                <button id="addJobBtn" onclick="openCreateModal()" class="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-700 text-gray-200 transition flex items-center gap-3 hidden">
                     <i class="fas fa-plus-circle text-green-400"></i> İlan Oluştur
                 </button>
             </nav>
@@ -134,9 +135,10 @@
     <div id="jobModal" class="fixed inset-0 modal-bg hidden flex items-center justify-center z-50 px-4">
         <div class="bg-gray-800 rounded-xl w-full max-w-lg p-6 border border-gray-700 shadow-2xl relative">
             <button onclick="closeJobModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            <h3 class="text-xl font-bold text-white mb-4">Yeni İlan Oluştur</h3>
+            <h3 id="modalTitle" class="text-xl font-bold text-white mb-4">Yeni İlan Oluştur</h3>
             
             <div class="space-y-3 h-96 overflow-y-auto pr-2 custom-scroll">
+                <input type="hidden" id="editJobId">
                 <input type="text" id="jTitle" placeholder="İş Başlığı (Örn: Garson)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white">
                 <input type="text" id="jSalary" placeholder="Ücret (Günlük/Aylık)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white">
                 <input type="text" id="jLoc" placeholder="Konum (İl/İlçe)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white">
@@ -150,7 +152,7 @@
                 </div>
             </div>
 
-            <button onclick="postJob()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg mt-4 transition">İlanı Yayınla</button>
+            <button onclick="postJob()" id="submitJobBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg mt-4 transition">İlanı Yayınla</button>
         </div>
     </div>
 
@@ -180,7 +182,6 @@
         let activeJobId = null;
         let allJobs = [];
 
-        // Sayfa yüklendiğinde oturum kontrolü
         window.onload = function() {
             if (currentUser) {
                 showDashboard();
@@ -198,7 +199,6 @@
             const age = parseInt(document.getElementById('rAge').value);
             const type = document.getElementById('rType').value;
 
-            // 1. & 4. İstek: Yaş kontrolü
             if (!user || !pass || !age) return alert("Lütfen tüm alanları doldurun.");
             if (age < 18) return alert("Üzgünüz, yaşınız 18'den küçük olamaz.");
             if (age > 100) return alert("Lütfen geçerli bir yaş giriniz (Max 100).");
@@ -214,7 +214,7 @@
                 alert(data.error);
             } else {
                 currentUser = data;
-                localStorage.setItem('user', JSON.stringify(currentUser)); // Hatırlama
+                localStorage.setItem('user', JSON.stringify(currentUser));
                 showDashboard();
             }
         }
@@ -231,7 +231,7 @@
             
             if (res.ok) {
                 currentUser = await res.json();
-                localStorage.setItem('user', JSON.stringify(currentUser)); // Hatırlama
+                localStorage.setItem('user', JSON.stringify(currentUser));
                 showDashboard();
             } else {
                 alert("Hatalı kullanıcı adı veya şifre!");
@@ -242,7 +242,6 @@
             document.getElementById('authWrapper').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
             
-            // Bilgileri Doldur
             document.getElementById('dUsername').innerText = currentUser.username;
             document.getElementById('dUserType').innerText = currentUser.user_type === 'employer' ? 'İŞ VEREN' : 'İŞ ARAYAN';
             document.getElementById('dAge').innerText = currentUser.age;
@@ -254,7 +253,6 @@
             loadJobs();
         }
 
-        // Profil Resmi Yükleme Fonksiyonu
         async function uploadAvatar() {
             const fileInput = document.getElementById('avatarInput');
             if (fileInput.files.length === 0) return;
@@ -271,15 +269,14 @@
             if (res.ok) {
                 const data = await res.json();
                 currentUser.avatar = data.avatar;
-                localStorage.setItem('user', JSON.stringify(currentUser)); // LocalStorage güncelle
-                document.getElementById('userAvatar').src = data.avatar; // Resmi hemen ekranda göster
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                document.getElementById('userAvatar').src = data.avatar;
                 alert("Profil resmi güncellendi!");
             } else {
                 alert("Resim yüklenirken hata oluştu.");
             }
         }
 
-        // İlanları Listeleme
         async function loadJobs() {
             const res = await fetch('/api/jobs');
             allJobs = await res.json();
@@ -296,16 +293,18 @@
             }
 
             jobs.forEach(job => {
-                // 5. İstek: Silme Butonu (Sadece sahibi görebilir)
-                let deleteBtn = "";
+                let actionBtns = "";
                 if (currentUser.username === job.owner_username) {
-                    deleteBtn = `<button onclick="deleteJob(${job.id})" class="absolute top-2 right-2 bg-red-500/80 hover:bg-red-600 p-2 rounded-lg text-white text-xs transition z-10" title="İlanı Sil"><i class="fas fa-trash"></i> Sil</button>`;
+                    actionBtns = `
+                    <div class="absolute top-2 right-2 flex gap-2 z-10">
+                        <button onclick="editJob(${job.id})" class="bg-indigo-500 hover:bg-indigo-600 p-2 rounded-lg text-white text-xs transition" title="Düzenle"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteJob(${job.id})" class="bg-red-500 hover:bg-red-600 p-2 rounded-lg text-white text-xs transition" title="Sil"><i class="fas fa-trash"></i></button>
+                    </div>`;
                 }
 
-                // Başvuru Butonu (İş verenler kendi ilanına başvuramaz)
                 let applyBtn = "";
                 if (currentUser.user_type === 'employee') {
-                    applyBtn = `<button onclick="openApply(${job.id})" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-medium transition">Başvur</button>`;
+                    applyBtn = `<button onclick="openApply(${job.id})" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-medium transition">Başvur / Mesaj Gönder</button>`;
                 }
 
                 const imgHtml = job.image_url 
@@ -314,7 +313,7 @@
 
                 const html = `
                 <div class="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 shadow-lg hover:shadow-2xl transition hover:-translate-y-1 relative group">
-                    ${deleteBtn}
+                    ${actionBtns}
                     ${imgHtml}
                     <div class="p-5">
                         <div class="flex justify-between items-start mb-2">
@@ -328,7 +327,6 @@
                             <div class="flex items-center gap-2"><i class="fas fa-phone text-indigo-400 w-4"></i> ${job.phone}</div>
                             <div class="flex items-center gap-2"><i class="fas fa-user text-indigo-400 w-4"></i> ${job.owner_username}</div>
                         </div>
-
                         ${applyBtn}
                     </div>
                 </div>`;
@@ -336,7 +334,6 @@
             });
         }
 
-        // İlan Arama
         function searchJobs() {
             const query = document.getElementById('searchInput').value.toLowerCase();
             const filtered = allJobs.filter(job => 
@@ -347,16 +344,36 @@
             renderJobs(filtered);
         }
 
-        // İlan Silme
         async function deleteJob(id) {
             if(!confirm("Bu ilanı silmek istediğinize emin misiniz?")) return;
-            
             const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
-            if(res.ok) {
-                loadJobs(); // Listeyi yenile
-            } else {
-                alert("İlan silinemedi.");
-            }
+            if(res.ok) loadJobs(); else alert("Hata oluştu.");
+        }
+
+        function openCreateModal() {
+            document.getElementById('modalTitle').innerText = "Yeni İlan Oluştur";
+            document.getElementById('editJobId').value = "";
+            document.getElementById('submitJobBtn').innerText = "İlanı Yayınla";
+            document.getElementById('jTitle').value = "";
+            document.getElementById('jDesc').value = "";
+            document.getElementById('jLoc').value = "";
+            document.getElementById('jSalary').value = "";
+            document.getElementById('jPhone').value = "";
+            document.getElementById('jobModal').classList.remove('hidden');
+        }
+
+        function editJob(id) {
+            const job = allJobs.find(j => j.id === id);
+            if(!job) return;
+            document.getElementById('modalTitle').innerText = "İlanı Düzenle";
+            document.getElementById('editJobId').value = job.id;
+            document.getElementById('jTitle').value = job.title;
+            document.getElementById('jSalary').value = job.salary;
+            document.getElementById('jLoc').value = job.location;
+            document.getElementById('jPhone').value = job.phone;
+            document.getElementById('jDesc').value = job.description;
+            document.getElementById('submitJobBtn').innerText = "Değişiklikleri Kaydet";
+            document.getElementById('jobModal').classList.remove('hidden');
         }
 
         function closeJobModal() {
@@ -364,6 +381,7 @@
         }
 
         async function postJob() {
+            const editId = document.getElementById('editJobId').value;
             const formData = new FormData();
             formData.append('owner_username', currentUser.username);
             formData.append('title', document.getElementById('jTitle').value);
@@ -371,23 +389,27 @@
             formData.append('location', document.getElementById('jLoc').value);
             formData.append('phone', document.getElementById('jPhone').value);
             formData.append('description', document.getElementById('jDesc').value);
-            formData.append('age_range', "18-35");
             
             const fileInput = document.getElementById('jFile');
-            if(fileInput.files[0]) {
-                formData.append('job_image', fileInput.files[0]);
+            if(fileInput.files[0]) formData.append('job_image', fileInput.files[0]);
+
+            let url = '/api/jobs';
+            let method = 'POST';
+
+            if(editId) {
+                url = `/api/jobs/${editId}`;
+                method = 'PUT';
             }
 
-            await fetch('/api/jobs', {
-                method: 'POST',
-                body: formData
-            });
+            const res = await fetch(url, { method: method, body: formData });
             
-            closeJobModal();
-            loadJobs();
-            // Formu temizle
-            document.getElementById('jTitle').value = "";
-            document.getElementById('jDesc').value = "";
+            if(res.ok) {
+                closeJobModal();
+                loadJobs();
+                alert(editId ? "İlan güncellendi!" : "İlan yayınlandı!");
+            } else {
+                alert("Bir hata oluştu.");
+            }
         }
 
         function openApply(id) { 
@@ -397,6 +419,8 @@
 
         async function sendApp() {
             const msg = document.getElementById('mText').value;
+            if(!msg) return alert("Lütfen bir mesaj yazın.");
+            
             await fetch('/api/messages', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -407,12 +431,11 @@
                     message_text: msg 
                 })
             });
-            alert("Başvurunuz başarıyla iletildi!");
+            alert("Mesajınız başarıyla iletildi!");
             document.getElementById('msgModal').classList.add('hidden');
             document.getElementById('mText').value = "";
         }
 
-        // Gelen Mesajları Açma
         async function openMessages() {
             document.getElementById('inboxModal').classList.remove('hidden');
             const res = await fetch(`/api/my-messages?username=${currentUser.username}`);
@@ -434,15 +457,18 @@
                             <span class="font-bold text-indigo-400">@${msg.sender_username} <span class="text-gray-400 text-xs font-normal">(Yaş: ${msg.sender_age})</span></span>
                             <span class="text-xs text-gray-500">${date}</span>
                         </div>
-                        <p class="text-gray-200 text-sm">${msg.message_text}</p>
-                        <div class="mt-2 text-xs text-gray-500">İlan ID: #${msg.job_id}</div>
+                        <p class="text-gray-200 text-sm mb-2">${msg.message_text}</p>
+                        <div class="flex items-center justify-between border-t border-gray-600 pt-2 mt-2">
+                             <span class="text-[10px] text-gray-500 uppercase">İlan: ${msg.job_title || 'İlan Silinmiş'}</span>
+                             <a href="https://wa.me/${msg.sender_phone || ''}" target="_blank" class="text-green-400 text-xs hover:underline"><i class="fab fa-whatsapp"></i> WhatsApp'tan Yanıtla</a>
+                        </div>
                     </div>
                 `;
             });
         }
 
         function logout() {
-            localStorage.removeItem('user'); // Sadece user verisini sil
+            localStorage.removeItem('user');
             location.reload();
         }
     </script>
